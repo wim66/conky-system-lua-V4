@@ -1,1 +1,0 @@
-/home/willem/git-repo/conky-system-lua/conky-vnstat-lua/settings.lua
