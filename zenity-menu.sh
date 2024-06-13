@@ -9,7 +9,7 @@ fi
 
 # Vraag de nieuwe waarden voor de variabelen via zenity dialoogvensters
 new_border_color=$(zenity --list --radiolist --title="Border Color" --text="Choose border colour:" --column="Select" --column="Color" TRUE "orange" FALSE "green" FALSE "blue" FALSE "black" FALSE "red")
-new_bg_color=$(zenity --list --radiolist --title="Background Color" --text="Choose background colour:" --column="Select" --column="Color" TRUE "black_50" FALSE "black_25" FALSE "black_75" FALSE "black_100" FALSE "blue")
+new_bg_color=$(zenity --list --radiolist --title="Background Color" --text="Choose background colour:" --column="Select" --column="Color" TRUE "black_50" FALSE "black_25" FALSE "black_75" FALSE "black_100" FALSE "dark_100" FALSE "blue")
 
 
 # Functie om settings.lua aan te passen

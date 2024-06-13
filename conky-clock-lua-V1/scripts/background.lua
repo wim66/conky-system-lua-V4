@@ -34,8 +34,9 @@ local color_options = {
 local bgcolor_options = {
     black_50 = { {1, 0x000000, 0.5} },
     black_25 = { {1, 0x000000, 0.25} },
-    black_75 = { {1, 0x000000, 0.25} },
-    black_100 = { {1, 0x23263A, 0.9} },
+    black_75 = { {1, 0x000000, 0.75} },
+    black_100 = { {1, 0x000000, 1} },
+    dark_100 = { {1, 0x23263A, 1} },
     blue = { {1, 0x0000ba, 0.5} }
 }
 

@@ -35,8 +35,9 @@ local color_options = {
 local bgcolor_options = {
     black_50 = { {1, 0x000000, 0.5} },
     black_25 = { {1, 0x000000, 0.25} },
-    black_75 = { {1, 0x000000, 0.25} },
-    black_100 = { {1, 0x23263A, 0.9} },
+    black_75 = { {1, 0x000000, 0.75} },
+    black_100 = { {1, 0x000000, 1} },
+    dark_100 = { {1, 0x23263A, 1} },
     blue = { {1, 0x0000ba, 0.5} }
 }
 
@@ -57,7 +58,7 @@ local boxes_settings = {
         type = "border",
         x = 2, y = 2, w = 254, h = 128,
         colour =border_color, 
-        linear_gradient = {127,0,127,128},
+        linear_gradient = {0,64,254,64},
         corners = { {"circle", 15} },
         border = 4,
         draw_me = true,
