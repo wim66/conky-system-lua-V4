@@ -1,49 +1,60 @@
 #!/bin/bash
 
-# Controleer of zenity is geïnstalleerd
+# Check if zenity is installed
 if ! command -v zenity &>/dev/null; then
-    zenity --error --title="Fout" --text="Zenity is niet geïnstalleerd.\nInstalleer het met: sudo apt-get install zenity"
+    zenity --error --title="Error" --text="Zenity is not installed.\nInstall it with: sudo apt-get install zenity"
     exit 1
 fi
 
-# Configuratiebestanden
+# Configuration files
 SETTINGS_FILES=(
     "conky-clock-lua-V1/settings.lua"
     "conky-system-lua-V4/settings.lua"
     "conky-vnstat-lua/settings.lua"
 )
 
-# Vraag de nieuwe waarden
-new_border_color=$(zenity --list --radiolist --title="Border Color" --text="Kies randkleur:" \
-    --column="Select" --column="Color" \
-    TRUE "orange" FALSE "green" FALSE "blue" FALSE "black" FALSE "red") || exit 0
+# Function to prompt for color selection
+prompt_color_selection() {
+    local title=$1
+    local text=$2
+    local colors=("${@:3}")  # All arguments from the third onwards are colors
+    local color_selection
 
-new_bg_color=$(zenity --list --radiolist --title="Background Color" --text="Kies achtergrondkleur:" \
-    --column="Select" --column="Color" \
-    TRUE "black_50" FALSE "black_25" FALSE "black_75" FALSE "black_100" FALSE "dark_100" FALSE "blue") || exit 0
+    color_selection=$(zenity --list --radiolist --title="$title" --text="$text" \
+        --column="Select" --column="Color" TRUE "${colors[0]}" FALSE "${colors[1]}" FALSE "${colors[2]}" FALSE "${colors[3]}" FALSE "${colors[4]}" FALSE "${colors[5]}") || exit 0
 
-# Controleer of er een keuze is gemaakt
-[[ -z "$new_border_color" || -z "$new_bg_color" ]] && {
-    zenity --error --title="Fout" --text="Geen geldige keuze gemaakt."
-    exit 1
+    echo "$color_selection"
 }
 
-# Functie om settings.lua aan te passen
+# Prompt for new values
+new_border_color=$(prompt_color_selection "Border Color" "Choose border color:" "orange" "green" "blue" "black" "red")
+new_bg_color=$(prompt_color_selection "Background Color" "Choose background color:" "black_50" "black_25" "black_75" "black_100" "dark_100" "blue")
+
+# Check if a selection was made
+if [[ -z "$new_border_color" || -z "$new_bg_color" ]]; then
+    zenity --error --title="Error" --text="No valid selection made."
+    exit 1
+fi
+
+# Function to update settings.lua
 update_settings() {
     local settings_file="$1"
     local tmp_file=$(mktemp) || {
-        zenity --error --title="Fout" --text="Kon tijdelijk bestand niet aanmaken voor $settings_file."
+        zenity --error --title="Error" --text="Could not create temporary file for $settings_file."
         return 1
     }
-    
+
     awk -v border_color="$new_border_color" -v bg_color="$new_bg_color" '
     /border_COLOR/ {if (border_color != "") { gsub(/".*"/, "\"" border_color "\"", $0) }}
     /bg_COLOR/ {if (bg_color != "") { gsub(/".*"/, "\"" bg_color "\"", $0) }}
     {print}
-    ' "$settings_file" > "$tmp_file" && mv "$tmp_file" "$settings_file"
+    ' "$settings_file" > "$tmp_file" && mv "$tmp_file" "$settings_file" || {
+        zenity --error --title="Error" --text="Failed to move temporary file to $settings_file."
+        return 1
+    }
 }
 
-# Update alle instellingenbestanden
+# Update all configuration files
 success_count=0
 for settings_file in "${SETTINGS_FILES[@]}"; do
     if [[ -f "$settings_file" ]]; then
@@ -59,9 +70,9 @@ done
 # Feedback
 total_files=${#SETTINGS_FILES[@]}
 if [[ $success_count -eq $total_files ]]; then
-    zenity --info --title="Voltooid" --text="Alle $total_files instellingen zijn bijgewerkt."
+    zenity --info --title="Complete" --text="All $total_files settings have been updated."
 elif [[ $success_count -gt 0 ]]; then
-    zenity --warning --title="Gedeeltelijk voltooid" --text="$success_count van $total_files bestanden bijgewerkt."
+    zenity --warning --title="Partially Complete" --text="$success_count of $total_files files updated."
 else
-    zenity --error --title="Fout" --text="Geen bestanden konden worden bijgewerkt."
+    zenity --error --title="Error" --text="No files could be updated."
 fi

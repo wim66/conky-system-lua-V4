@@ -2,21 +2,20 @@
 #########################
 # conky-system-lua-V3   #
 # by +WillemO @wim66    #
-# v1.6 20-feb-25       #
-# Optimized by Grok     #
+# v1.6 20-feb-25        #
 #########################
 ]]
 
 require 'cairo'
 
--- Configuratie constantes
+-- Configuration constants
 local CONFIG = {
-    NET_INTERFACE = var_NETWORK,  -- Pas aan naar je netwerkinterface
+    NET_INTERFACE = var_NETWORK,  -- Set in settings.lua
     FONT_DEFAULT = "Dejavu Sans Mono",
     UPDATE_INTERVAL = 3
 }
 
--- Kleuren definities
+-- Color definitions
 local COLORS = {
     PRIMARY = {{0, 0xE7660B, 1}},
     SECONDARY = {{0, 0xFAAD3E, 1}},
@@ -25,7 +24,7 @@ local COLORS = {
     GRADIENT = {{0.35, 0xE7660B, 1}, {0.8, 0xDCE142, 1}, {0.99, 0xE7660B, 1}}
 }
 
--- Netwerk variabelen
+-- Network variables
 local NET_VARS = {
     UP = "${upspeed " .. CONFIG.NET_INTERFACE .. "}",
     DOWN = "${downspeed " .. CONFIG.NET_INTERFACE .. "}",
@@ -33,7 +32,7 @@ local NET_VARS = {
     TOTAL_DOWN = "${totaldown " .. CONFIG.NET_INTERFACE .. "}"
 }
 
--- Hoofdfunctie
+-- Main function
 function conky_draw_text()
     local updates = tonumber(conky_parse("$updates")) or 0
     if updates < CONFIG.UPDATE_INTERVAL then 
@@ -46,7 +45,7 @@ function conky_draw_text()
     end
 
     local w, h = conky_window.width, conky_window.height
-    local xc = w/2
+    local xc = w / 2
 
     local status, cs = pcall(function()
         return cairo_xlib_surface_create(
@@ -58,8 +57,7 @@ function conky_draw_text()
     end)
     
     if not status then
-        print("Error creating cairo surface: " .. cs)
-        return
+        error("Error creating cairo surface: " .. cs)
     end
 
     local text_settings = generate_text_settings(xc)
@@ -73,10 +71,10 @@ function conky_draw_text()
     cairo_surface_destroy(cs)
 end
 
--- Genereer text settings
+-- Generate text settings
 function generate_text_settings(xc)
     return concatenate_tables({
-        -- Systeem info
+        -- System info
         {{
             text = conky_parse("${if_existing /usr/bin/lsb_release}${execi 10000 lsb_release -d | cut -f 2}${else}$distribution${endif}"),
             font_name = "Dejavu Sans Mono",
@@ -102,30 +100,30 @@ function generate_text_settings(xc)
             colour = COLORS.SECONDARY
         }},
         
-        -- CPU blok
+        -- CPU block
         cpu_block(xc),
         
-        -- Geheugen blok
+        -- Memory block
         memory_block(xc),
         
-        -- Disk blok
+        -- Disk block
         disk_block(xc),
         
-        -- Netwerk blok
+        -- Network block
         network_block(xc),
         
-        -- Processen blok
+        -- Processes block
         processes_block(xc),
         
         -- Updates
         updates_block(xc),
         
-        -- Bitcoin prijs
+        -- Bitcoin price
         bitcoin_price_block(xc)
     })
 end
 
--- Hulpfunctie om tafels te combineren
+-- Helper function to concatenate tables
 function concatenate_tables(tables)
     local result = {}
     for _, t in ipairs(tables) do
@@ -137,7 +135,7 @@ function concatenate_tables(tables)
     return result
 end
 
--- Blok functies
+-- Block functions
 function cpu_block(xc)
     return {
         {
@@ -204,32 +202,17 @@ end
 function processes_block(xc)
     local base_y = 459
     local process_entries = {}
-    local max_width = 15  -- Maximale breedte van de procesnaam, overeenkomend met top_name_width
+    local max_width = 15  -- Maximum width of the process name, corresponding to top_name_width
 
     for i = 1, 6 do
         local alpha = 1 - (i-1) * 0.15
-        -- Haal de procesnaam op en kap af tot max_width karakters
         local process_name = conky_parse("${top name " .. i .. "}")
-        process_name = string.sub(process_name, 1, max_width)  -- Beperk tot 18 karakters
+        process_name = string.sub(process_name, 1, max_width)  -- Limit to 18 characters
         
-        table.insert(process_entries, {
-            text = process_name,
-            font_name = "Dejavu Sans Mono",
-            font_size = 16,
-            x = 20,
-            y = base_y + 16 + (i-1) * 18,
-            colour = {{0, 0x42E147, alpha}}
-        })
-        table.insert(process_entries, {
-            text = conky_parse("${top cpu " .. i .. "}%"),
-            font_name = "Dejavu Sans Mono",
-            font_size = 16,
-            x = 228,
-            y = base_y + 16 + (i-1) * 18,
-            h_align = "r",
-            colour = {{0, 0x42E147, alpha}}
-        })
+        insert_process_entry(process_entries, process_name, "Dejavu Sans Mono", 16, 20, base_y + 16 + (i-1) * 18, {{0, 0x42E147, alpha}}, "l")
+        insert_process_entry(process_entries, conky_parse("${top cpu " .. i .. "}%"), "Dejavu Sans Mono", 16, 228, base_y + 16 + (i-1) * 18, {{0, 0x42E147, alpha}}, "r")
     end
+    
     table.insert(process_entries, 1, {
         text = "Processes",
         font_name = "Dejavu Sans Mono",
@@ -239,20 +222,34 @@ function processes_block(xc)
         y = base_y,
         colour = COLORS.HIGHLIGHT
     })
+
     return process_entries
+end
+
+-- Helper function to insert process entry
+function insert_process_entry(entries, text, font_name, font_size, x, y, color, h_align)
+    table.insert(entries, {
+        text = text,
+        font_name = font_name,
+        font_size = font_size,
+        x = x,
+        y = y,
+        colour = color,
+        h_align = h_align
+    })
 end
 
 function updates_block(xc)
     local updates_text, security_text = "", ""
     
-    -- Controleer of het bestand bestaat (voor Ubuntu)
+    -- Check if the file exists (for Ubuntu)
     if os.execute("test -f /usr/lib/update-notifier/apt-check") == 0 then
         updates_text = conky_parse("${execi 1800 /usr/lib/update-notifier/apt-check --human-readable | awk 'NR==1'}")
         security_text = conky_parse("${execi 1800 /usr/lib/update-notifier/apt-check --human-readable | awk 'NR==2'}")
     else
-        -- Voor Arch Linux of andere systemen
+        -- For Arch Linux or other systems
         updates_text = "Available updates: " .. conky_parse("${execi 1800 checkupdates | wc -l}")
-        security_text = "" -- Geen tweede regel nodig voor Arch
+        security_text = "" -- No second line needed for Arch
     end
 
     return {
@@ -279,7 +276,7 @@ function updates_block(xc)
     }
 end
 
--- Nieuwe Bitcoin prijs functie
+-- New Bitcoin price function
 function bitcoin_price_block(xc)
     local base_y = 610
     return {
@@ -304,7 +301,7 @@ function bitcoin_price_block(xc)
     }
 end
 
--- Display text functie
+-- Display text function
 function display_text(cr, t)
     if t.draw_me and conky_parse(tostring(t.draw_me)) ~= "1" then return end
     
@@ -359,7 +356,7 @@ function display_text(cr, t)
     cairo_restore(cr)
 end
 
--- RGB conversie
+-- RGB conversion
 function rgb_to_r_g_b2(tcolour)
     local colour, alpha = tcolour[2], tcolour[3]
     return ((colour / 0x10000) % 0x100) / 255,
@@ -368,4 +365,4 @@ function rgb_to_r_g_b2(tcolour)
            alpha
 end
 
--- Einde script
+-- End of script
