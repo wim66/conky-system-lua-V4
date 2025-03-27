@@ -129,7 +129,7 @@ function set_settings()
 {
 	name="upspeedf",
 	arg=var_NETWORK,
-	max=400,
+	max=5000,
 	x=20,
 	y=420,
  	autoscale=true,
@@ -138,16 +138,16 @@ function set_settings()
 	bg_bd_size=0.5,
 	bg_bd_colour = { {0,0x5294E2,0.7}},
 	bg_colour = {{0,0x5294E2,0.1},{0.5,0x5294E2,0.7},{1,0x5294E2,0.1}},
-	fg_colour = { {0,0xFF2021,1},{0.5,0x006600,0.5},{1,0x00FF00,0.5}},
+	fg_colour = { {0,0xFF8000,1}, {0.5,0x0066CC,0.5}, {1,0x00CCFF,0.5}},
 	fg_bd_size=2,
-	fg_bd_colour = { {0,0xFF0000,1},{0.66,0x006600,1},{1,0x00FF00,1}},
+	fg_bd_colour = { {0,0xFF8000,1}, {0.66,0x0066CC,1}, {1,0x00CCFF,1}},
 	foreground=true
 },
 
 {
 	name="downspeedf",
 	arg=var_NETWORK,
-	max=2000,
+	max=50000,
 	x=140,
 	y=420,
  	autoscale=true,

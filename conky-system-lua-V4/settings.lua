@@ -14,8 +14,8 @@ function conky_vars()
     use_FONT = "zekton"
     -- https://www.dafont.com/zekton.font
   
-    border_COLOR = "black"  -- options, green, orange, blue, black, red
-    bg_COLOR = "dark_100"      -- options balck, blue
+border_COLOR = "orange" --options are green, blue, black, orange or default
+bg_COLOR = "black_75"      -- options balck, blue
 
 end
 

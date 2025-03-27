@@ -1,20 +1,49 @@
-#!/bin/sh
+#!/bin/bash
 
-# Making sure theme-dir is working-dir
-        cd "$(dirname "$0")"
-netw=`grep var_WIFI ../settings.lua | awk -F\" '{print $2}' | head -1`
-downtoday=`vnstat -i $netw | grep "today" | awk '{print $2 $3}'`
-uptoday=`vnstat -i $netw | grep "today" | awk '{print $5 $6}'`
+cd "$(dirname "$0")"
 
-down_week=`vnstat -i $netw -w | grep "current week" | awk '{print $3 $4}'`
-up_week=`vnstat -i $netw -w | grep "current week" | awk '{print $6 $7}'`
+# Haal netwerkinterface op
+netw=$(grep var_WIFI ../settings.lua | awk -F\" '{print $2}' | head -1)
+[ -z "$netw" ] && netw="enp0s25"  # Gebruik jouw interface als fallback
 
-stats_month=`vnstat -i $netw -m`
+output="vnstat.txt"
 
+# Controleer of vnstat data heeft voor deze interface
+if ! vnstat -i "$netw" >/dev/null 2>&1; then
+    echo "Interface $netw niet gevonden in vnstat. Initialiseer met 'vnstat -u -i $netw'" >&2
+    echo "N/A" > "$output"
+    echo "N/A" >> "$output"
+    echo "N/A" >> "$output"
+    echo "N/A" >> "$output"
+    echo "N/A" >> "$output"
+    echo "N/A" >> "$output"
+    exit 1
+fi
 
-echo "$downtoday" > vnstat.txt
-echo "$uptoday" >> vnstat.txt
-echo "$down_week" >> vnstat.txt
-echo "$up_week" >> vnstat.txt
-echo "$stats_month" | grep "`date +"%b '%y"`" | awk '{print $3 $4}' >> vnstat.txt
-echo "$stats_month" | grep "`date +"%b '%y"`" | awk '{print $6 $7}' >> vnstat.txt
+# Dagstatistieken (gebruik de standaard uitvoer, niet -d)
+today=$(vnstat -i "$netw" | grep "today")
+echo "${today:-N/A}" | awk '{print $2 $3}' > "$output"      # Down today
+echo "${today:-N/A}" | awk '{print $5 $6}' >> "$output"     # Up today
+
+# Weekstatistieken
+week=$(vnstat -i "$netw" -w | grep "current week")
+echo "${week:-N/A}" | awk '{print $3 $4}' >> "$output"      # Down week
+echo "${week:-N/A}" | awk '{print $6 $7}' >> "$output"      # Up week
+
+# Maandstatistieken
+current_month=$(date +"%b '%y")
+month=$(vnstat -i "$netw" -m | grep "$current_month")
+echo "${month:-N/A}" | awk '{print $3 $4}' >> "$output"     # Down month
+echo "${month:-N/A}" | awk '{print $6 $7}' >> "$output"     # Up month
+
+# Controleer het aantal lijnen
+lines=$(wc -l < "$output")
+if [ "$lines" -lt 6 ]; then
+    echo "Onvolledige data, vult met N/A" >&2
+    echo "N/A" > "$output"
+    echo "N/A" >> "$output"
+    echo "N/A" >> "$output"
+    echo "N/A" >> "$output"
+    echo "N/A" >> "$output"
+    echo "N/A" >> "$output"
+fi

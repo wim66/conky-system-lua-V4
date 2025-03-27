@@ -1,1 +1,0 @@
-/home/willem/git-repo/conky-system-lua-V4/conky-clock-lua-V1/settings.lua
