@@ -14,6 +14,4 @@ A collection of Conkies for system monitoring using Lua scripts.
    ```sh
    git clone https://github.com/wim66/conky-system-lua-V4.git
 
-   <p align="center">
-  <img src="https://github.com/wim66/conky-system-lua-V4/blob/main/preview.png" alt="image">
-</p>
+<p align="center"> <img src="https://github.com/wim66/conky-system-lua-V4/blob/main/preview.png" alt="image"></p>
