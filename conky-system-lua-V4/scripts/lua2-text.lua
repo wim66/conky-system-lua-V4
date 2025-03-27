@@ -194,7 +194,7 @@ function network_block(xc)
         {text = "Down", font_name = "Dejavu Sans Mono", font_size = 14, x = 142, y = base_y + 20, colour = COLORS.SECONDARY},
         {text = conky_parse(NET_VARS.DOWN), font_name = "Dejavu Sans Mono", font_size = 14, h_align = "r", x = 240, y = base_y + 20, colour = COLORS.SUCCESS},
         {text = "Session", font_name = "Dejavu Sans Mono", font_size = 14, x = 23, y = base_y + 82, colour = COLORS.SECONDARY},
-        {text = conky_parse(NET_VARS.TOTAL_UP), font_name = "Dejavu Sans Mono", font_size = 14, h_align = "r", x = 120, y = base_y + 82, colour = COLORS.SUCCESS},
+        {text = conky_parse(NET_VARS.TOTAL_UP), font_name = "Dejavu Sans Mono", font_size = 14, h_align = "r", x = 124, y = base_y + 82, colour = COLORS.SUCCESS},
         {text = conky_parse(NET_VARS.TOTAL_DOWN), font_name = "Dejavu Sans Mono", font_size = 14, h_align = "r", x = 240, y = base_y + 82, colour = COLORS.SUCCESS}
     }
 end
