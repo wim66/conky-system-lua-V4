@@ -168,7 +168,7 @@ function conky_draw_text()
     local text_settings = {
         {text = "VNSTAT", x = 20, y = 30, font_size = 20, colour = colors.primary},
         {text = "network traffic", x = 120, y = 30, font_size = 14, colour = colors.success},
-        {text = "Down", h_align = "l", x = 20, y = 50, colour = colors.highlight},
+        {text = "Down", h_align = "r", x = 140, y = 50, colour = colors.highlight},
         {text = "Up", h_align = "r", x = 240, y = 50, colour = colors.highlight},
         {text = "Today", x = 20, y = 70, colour = colors.highlight},
         {text = vnstat_lines[1] or "N/A", font_name = "arial", h_align = "r", x = 140, y = 70, colour = colors.secondary},
