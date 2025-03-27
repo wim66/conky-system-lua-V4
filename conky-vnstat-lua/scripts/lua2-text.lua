@@ -2,8 +2,7 @@
 #########################
 # conky-vnstat-lua      #
 # by +WillemO @wim66    #
-#  v1.5 23-dec-17       #
-#                       #
+#  v2 27-march-2024     #
 #########################
 ]]
 
@@ -93,54 +92,32 @@ v1.42   09/02/2011  Correct bug for orientation="ee"
 ]]
 require 'cairo'
 
-function conky_draw_text()
-    if conky_window == nil then return end
-    if tonumber(conky_parse("$updates")) < 3 then return end
-
-    local w = conky_window.width
-    local xc = w / 2
-
-    local colors = {
-        primary = {{0, 0xE7660B, 1}},
-        secondary = {{0, 0xFAAD3E, 1}},
-        highlight = {{0, 0xDCE142, 1}},
-        success = {{0, 0x42E147, 1}}
-    }
-
-    -- Haal vnstat.txt één keer op
-    conky_parse("${execi 60 scripts/vnstat.sh}")
-    local vnstat_lines = {}
-    for line in io.lines("scripts/vnstat.txt") do
-        table.insert(vnstat_lines, line)
-    end
-
-    local text_settings = {
-        {text = "VNSTAT -", x = 20, y = 30, font_size = 20, colour = colors.primary},
-        {text = "network traffic", x = 120, y = 30, font_size = 14, colour = colors.success},
-        {text = "Down", h_align = "l", x = 20, y = 50, colour = colors.highlight}, -- New entry for "Down"
-        {text = "Up", h_align = "r", x = 240, y = 50, colour = colors.highlight},   -- Adjusted entry for "Up"
-        {text = "Today", x = 20, y = 70, colour = colors.highlight},
-        {text = vnstat_lines[1] or "N/A", font_name = "arial", h_align = "r", x = 140, y = 70, colour = colors.secondary},
-        {text = vnstat_lines[2] or "N/A", font_name = "arial", h_align = "r", x = 240, y = 70, colour = colors.secondary},
-        {text = "Week", x = 20, y = 90, colour = colors.highlight},
-        {text = vnstat_lines[3] or "N/A", font_name = "arial", h_align = "r", x = 140, y = 90, colour = colors.secondary},
-        {text = vnstat_lines[4] or "N/A", font_name = "arial", h_align = "r", x = 240, y = 90, colour = colors.secondary},
-        {text = "Month", x = 20, y = 110, colour = colors.highlight},
-        {text = vnstat_lines[5] or "N/A", font_name = "arial", h_align = "r", x = 140, y = 110, colour = colors.secondary},
-        {text = vnstat_lines[6] or "N/A", font_name = "arial", h_align = "r", x = 240, y = 110, colour = colors.secondary},
-    }
-
-    local cs = cairo_xlib_surface_create(conky_window.display, conky_window.drawable, conky_window.visual, w, conky_window.height)
-    for _, v in pairs(text_settings) do
-        local cr = cairo_create(cs)
-        display_text(cr, v)
-        cairo_destroy(cr)
-    end
-    cairo_surface_destroy(cs)
+-- Define rgb_to_r_g_b2 function before it is used
+local function rgb_to_r_g_b2(tcolour)
+    local colour, alpha = tcolour[2], tcolour[3]
+    return ((colour / 0x10000) % 0x100) / 255, ((colour / 0x100) % 0x100) / 255, (colour % 0x100) / 255, alpha
 end
 
-function display_text(cr, t)
-    -- Standaardwaarden
+local function load_vnstat_data()
+    conky_parse("${execi 60 scripts/vnstat.sh}")
+    local vnstat_lines = {}
+    local file = io.open("scripts/vnstat.txt", "r")
+    if file then
+        for line in file:lines() do
+            table.insert(vnstat_lines, line)
+        end
+        file:close()
+    else
+        print("Error: Could not open vnstat.txt")
+    end
+    return vnstat_lines
+end
+
+local function create_surface()
+    return cairo_xlib_surface_create(conky_window.display, conky_window.drawable, conky_window.visual, conky_window.width, conky_window.height)
+end
+
+local function display_text(cr, t)
     t.text = t.text or "Conky is good for you!"
     t.x = t.x or conky_window.width / 2
     t.y = t.y or conky_window.height / 2
@@ -153,26 +130,62 @@ function display_text(cr, t)
 
     cairo_save(cr)
     cairo_translate(cr, t.x, t.y)
-
+    
     local slant = t.bold and CAIRO_FONT_WEIGHT_BOLD or CAIRO_FONT_WEIGHT_NORMAL
     cairo_select_font_face(cr, t.font_name, CAIRO_FONT_SLANT_NORMAL, slant)
     cairo_set_font_size(cr, t.font_size)
-
+    
     local te = cairo_text_extents_t:create()
     tolua.takeownership(te)
     cairo_text_extents(cr, t.text, te)
-
+    
     cairo_set_source_rgba(cr, rgb_to_r_g_b2(t.colour[1]))
-
+    
     local mx = t.h_align == "c" and -te.width / 2 or t.h_align == "r" and -te.width or 0
     local my = t.v_align == "m" and -te.height / 2 or t.v_align == "t" and 0 or -te.y_bearing
     cairo_move_to(cr, mx, my)
     cairo_show_text(cr, t.text)
-
+    
     cairo_restore(cr)
 end
 
-function rgb_to_r_g_b2(tcolour)
-    local colour, alpha = tcolour[2], tcolour[3]
-    return ((colour / 0x10000) % 0x100) / 255, ((colour / 0x100) % 0x100) / 255, (colour % 0x100) / 255, alpha
+function conky_draw_text()
+    if conky_window == nil then return end
+    if tonumber(conky_parse("$updates")) < 3 then return end
+    
+    local w = conky_window.width
+    local xc = w / 2
+
+    local colors = {
+        primary = {{0, 0xE7660B, 1}},
+        secondary = {{0, 0xFAAD3E, 1}},
+        highlight = {{0, 0xDCE142, 1}},
+        success = {{0, 0x42E147, 1}}
+    }
+
+    local vnstat_lines = load_vnstat_data()
+    
+    local text_settings = {
+        {text = "VNSTAT", x = 20, y = 30, font_size = 20, colour = colors.primary},
+        {text = "network traffic", x = 120, y = 30, font_size = 14, colour = colors.success},
+        {text = "Down", h_align = "l", x = 20, y = 50, colour = colors.highlight},
+        {text = "Up", h_align = "r", x = 240, y = 50, colour = colors.highlight},
+        {text = "Today", x = 20, y = 70, colour = colors.highlight},
+        {text = vnstat_lines[1] or "N/A", font_name = "arial", h_align = "r", x = 140, y = 70, colour = colors.secondary},
+        {text = vnstat_lines[2] or "N/A", font_name = "arial", h_align = "r", x = 240, y = 70, colour = colors.secondary},
+        {text = "Week", x = 20, y = 90, colour = colors.highlight},
+        {text = vnstat_lines[3] or "N/A", font_name = "arial", h_align = "r", x = 140, y = 90, colour = colors.secondary},
+        {text = vnstat_lines[4] or "N/A", font_name = "arial", h_align = "r", x = 240, y = 90, colour = colors.secondary},
+        {text = "Month", x = 20, y = 110, colour = colors.highlight},
+        {text = vnstat_lines[5] or "N/A", font_name = "arial", h_align = "r", x = 140, y = 110, colour = colors.secondary},
+        {text = vnstat_lines[6] or "N/A", font_name = "arial", h_align = "r", x = 240, y = 110, colour = colors.secondary},
+    }
+
+    local cs = create_surface()
+    for _, v in pairs(text_settings) do
+        local cr = cairo_create(cs)
+        display_text(cr, v)
+        cairo_destroy(cr)
+    end
+    cairo_surface_destroy(cs)
 end

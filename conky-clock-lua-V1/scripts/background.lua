@@ -1,28 +1,27 @@
 -- background.lua
 -- by @wim66
--- June 8 2024
+-- v2 v2 27-march-2024
 
--- Zorg ervoor dat je het juiste pad naar settings.lua instelt
+-- Make sure to set the correct path to settings.lua
 local script_path = debug.getinfo(1, 'S').source:match[[^@?(.*[\/])[^\/]-$]]
 local parent_path = script_path:match("^(.*[\\/])scripts[\\/].*$")
 
 package.path = package.path .. ";" .. parent_path .. "?.lua"
 
--- Probeer settings.lua te laden vanuit de parent directory
+-- Attempt to load settings.lua from the parent directory
 local status, err = pcall(function() require("settings") end)
 if not status then
     print("Error loading settings.lua: " .. err)
 end
 
--- Zorg ervoor dat de conky_vars functie wordt aangeroepen om de variabelen in te stellen
+-- Make sure the conky_vars function is called to set the variables
 if conky_vars then
     conky_vars()
 else
     print("conky_vars function is not defined in settings.lua")
 end
 
-conky_vars()
--- Selecteer de kleur op basis van de variabele uit settings.lua
+-- Select the color based on the variable from settings.lua
 local color_options = {
     green = { {0, 0x003E00, 1}, {0.5, 0x03F404, 1}, {1, 0x003E00, 1} },
     orange = { {0, 0xE05700, 1}, {0.5, 0xFFD145, 1}, {1, 0xE05700, 1} },
@@ -40,15 +39,15 @@ local bgcolor_options = {
     blue = { {1, 0x0000ba, 0.5} }
 }
 
-local border_color = color_options[border_COLOR] or color_options.green  -- standaard naar groen als border_COLOR niet bestaat
-local bg_color = bgcolor_options[bg_COLOR] or bgcolor_options.black      -- standaard naar zwart als bg_COLOR niet bestaat
+local border_color = color_options[border_COLOR] or color_options.green  -- default to green if border_COLOR does not exist
+local bg_color = bgcolor_options[bg_COLOR] or bgcolor_options.black      -- default to black if bg_COLOR does not exist
 
 local boxes_settings = {
     -- Base background
     {
         type = "base",
         x = 2, y = 2, w = 254, h = 128,
-        colour =bg_color,
+        colour = bg_color,
         corners = { {"circle", 15} },
         draw_me = true,
     },
@@ -56,7 +55,7 @@ local boxes_settings = {
     {
         type = "border",
         x = 2, y = 2, w = 254, h = 128,
-        colour =border_color,
+        colour = border_color,
         linear_gradient = {0,64,254,64},
         corners = { {"circle", 15} },
         border = 4,
@@ -64,7 +63,7 @@ local boxes_settings = {
     },
 }
 
--- Functie om een rechthoek met afgeronde hoeken te tekenen
+-- Function to draw a rectangle with rounded corners
 local function draw_rounded_rectangle(cr, x, y, w, h, r)
     cairo_new_path(cr)
     cairo_move_to(cr, x + r, y)
@@ -79,6 +78,24 @@ local function draw_rounded_rectangle(cr, x, y, w, h, r)
     cairo_close_path(cr)
 end
 
+local function draw_base(cr, box)
+    cairo_set_source_rgba(cr, ((box.colour[1][2] & 0xFF0000) >> 16) / 255, ((box.colour[1][2] & 0x00FF00) >> 8) / 255, (box.colour[1][2] & 0x0000FF) / 255, box.colour[1][3])
+    draw_rounded_rectangle(cr, box.x, box.y, box.w, box.h, box.corners[1][2])
+    cairo_fill(cr)
+end
+
+local function draw_border(cr, box)
+    local gradient = cairo_pattern_create_linear(table.unpack(box.linear_gradient))
+    for _, color in ipairs(box.colour) do
+        cairo_pattern_add_color_stop_rgba(gradient, color[1], ((color[2] & 0xFF0000) >> 16) / 255, ((color[2] & 0x00FF00) >> 8) / 255, (color[2] & 0x0000FF) / 255, color[3])
+    end
+    cairo_set_source(cr, gradient)
+    cairo_set_line_width(cr, box.border)
+    draw_rounded_rectangle(cr, box.x + box.border/2, box.y + box.border/2, box.w - box.border, box.h - box.border, box.corners[1][2] - box.border/2)
+    cairo_stroke(cr)
+    cairo_pattern_destroy(gradient)
+end
+
 function conky_draw_background()
     if conky_window == nil then
         return
@@ -90,21 +107,9 @@ function conky_draw_background()
     for _, box in ipairs(boxes_settings) do
         if box.draw_me then
             if box.type == "base" then
-                -- Teken de achtergrond
-                cairo_set_source_rgba(cr, ((box.colour[1][2] & 0xFF0000) >> 16) / 255, ((box.colour[1][2] & 0x00FF00) >> 8) / 255, (box.colour[1][2] & 0x0000FF) / 255, box.colour[1][3])
-                draw_rounded_rectangle(cr, box.x, box.y, box.w, box.h, box.corners[1][2])
-                cairo_fill(cr)
+                draw_base(cr, box)
             elseif box.type == "border" then
-                -- Teken de rand met kleurverloop
-                local gradient = cairo_pattern_create_linear(table.unpack(box.linear_gradient))
-                for _, color in ipairs(box.colour) do
-                    cairo_pattern_add_color_stop_rgba(gradient, color[1], ((color[2] & 0xFF0000) >> 16) / 255, ((color[2] & 0x00FF00) >> 8) / 255, (color[2] & 0x0000FF) / 255, color[3])
-                end
-                cairo_set_source(cr, gradient)
-                cairo_set_line_width(cr, box.border)
-                draw_rounded_rectangle(cr, box.x + box.border/2, box.y + box.border/2, box.w - box.border, box.h - box.border, box.corners[1][2] - box.border/2)
-                cairo_stroke(cr)
-                cairo_pattern_destroy(gradient)
+                draw_border(cr, box)
             end
         end
     end

@@ -2,8 +2,7 @@
 #########################
 # conky-clock-lua-V1    #
 # by +WillemO @wim66    #
-# v1.5 23-dec-17        #
-#                       #
+# v2 v2 27-march-2024   #
 #########################
 ]]
 
@@ -92,270 +91,220 @@ v1.42   09/02/2011  Correct bug for orientation="ee"
 --      MA 02110-1301, USA.		
 
 ]]
+
 require 'cairo'
 
 function conky_draw_text()
-	--BEGIN OF PARAMETRES
-	if conky_window==nil then return end
-	local w=conky_window.width
-	local h=conky_window.height
-		local xc=w/2
-		local yc=h/2
-   	local color1={{0,0xE7660B,1}}
-	local color2={{0,0xFAAD3E,1}}
-	local color3={{0,0xDCE142,1}}
-
-    text_settings={
-
-
-		{
-			text=conky_parse( "${time %A}" ),
-			font_name="Candlescript Demo Version",
-			font_size=44,
-			h_align="r",
-			v_align="m",
-			bold=false,
-			x=248,
-			y=56,
-			orientation="nn",
-			colour={{0,0x000000,0.5}},
-		},
-
-		{
-			text=conky_parse( "${time %A}" ),
-			font_name="Candlescript Demo Version",
-			font_size=44,
-			h_align="r",
-			v_align="m",
-			bold=false,
-			x=244,
-			y=52,
-			colour=color1,
-		},
-
-		{
-			text=conky_parse( "${time %d %B}" ),
-			font_size=18,
-			h_align="r",
-			v_align="m",
-			bold=false,
-			x=237,
-			y=91,
-			orientation="nn",
-			colour={{0,0x000000,0.5}},
-		},
-
-		{
-			text=conky_parse( "${time %d %B}" ),
-			font_size=18,
-			h_align="r",
-			v_align="m",
-			bold=false,
-			x=234,
-			y=88,
-			orientation="nn",
-			colour=color2,
-		},
-	}
-
-
-    
---------------END OF PARAMETERS----------------
-
     if conky_window == nil then return end
-    if tonumber(conky_parse("$updates"))<3 then return end
-       
-    local cs = cairo_xlib_surface_create(conky_window.display, conky_window.drawable, conky_window.visual, conky_window.width, conky_window.height)
+    
+    local w = conky_window.width
+    local h = conky_window.height
+    local xc = w / 2
+    local yc = h / 2
+    local color1 = {{0, 0xE7660B, 1}}
+    local color2 = {{0, 0xFAAD3E, 1}}
+    local color3 = {{0, 0xDCE142, 1}}
 
-    for i,v in pairs(text_settings) do    
-        cr = cairo_create (cs)
+    local text_settings = {
+        {
+            text = conky_parse("${time %A}"),
+            font_name = "Candlescript Demo Version",
+            font_size = 44,
+            h_align = "r",
+            v_align = "m",
+            bold = false,
+            x = 248,
+            y = 56,
+            orientation = "nn",
+            colour = {{0, 0x000000, 0.5}},
+        },
+        {
+            text = conky_parse("${time %A}"),
+            font_name = "Candlescript Demo Version",
+            font_size = 44,
+            h_align = "r",
+            v_align = "m",
+            bold = false,
+            x = 244,
+            y = 52,
+            colour = color1,
+        },
+        {
+            text = conky_parse("${time %d %B}"),
+            font_size = 18,
+            h_align = "r",
+            v_align = "m",
+            bold = false,
+            x = 237,
+            y = 91,
+            orientation = "nn",
+            colour = {{0, 0x000000, 0.5}},
+        },
+        {
+            text = conky_parse("${time %d %B}"),
+            font_size = 18,
+            h_align = "r",
+            v_align = "m",
+            bold = false,
+            x = 234,
+            y = 88,
+            orientation = "nn",
+            colour = color2,
+        },
+    }
+
+    if tonumber(conky_parse("$updates")) < 3 then return end
+
+    local cs = cairo_xlib_surface_create(conky_window.display, conky_window.drawable, conky_window.visual, conky_window.width, conky_window.height)
+    
+    for i, v in pairs(text_settings) do
+        local cr = cairo_create(cs)
         display_text(v)
         cairo_destroy(cr)
-	    cr = nil
     end
     
     cairo_surface_destroy(cs)
-
 end
 
 function rgb_to_r_g_b2(tcolour)
-    local colour,alpha=tcolour[2],tcolour[3]
+    local colour, alpha = tcolour[2], tcolour[3]
     return ((colour / 0x10000) % 0x100) / 255., ((colour / 0x100) % 0x100) / 255., (colour % 0x100) / 255., alpha
 end
 
 function display_text(t)
-    if t.draw_me==true then t.draw_me = nil end
-    if t.draw_me~=nil and conky_parse(tostring(t.draw_me)) ~= "1" then return end
-    local function set_pattern(te)
-        --this function set the pattern
-        if #t.colour==1 then 
-            cairo_set_source_rgba(cr,rgb_to_r_g_b2(t.colour[1]))
-        else
-            local pat
-            
-            if t.radial==nil then
-                local pts=linear_orientation(t,te)
-                pat = cairo_pattern_create_linear (pts[1],pts[2],pts[3],pts[4])
-            else
-                pat = cairo_pattern_create_radial (t.radial[1],t.radial[2],t.radial[3],t.radial[4],t.radial[5],t.radial[6])
-            end
-        
-            for i=1, #t.colour do
-                cairo_pattern_add_color_stop_rgba (pat, t.colour[i][1], rgb_to_r_g_b2(t.colour[i]))
-            end
-            cairo_set_source (cr, pat)
-            cairo_pattern_destroy(pat)
-        end
-    end
-    
-    --set default values if needed
-    if t.text==nil then t.text="Conky is good for you !" end
-    if t.x==nil then t.x = conky_window.width/2 end
-    if t.y==nil then t.y = conky_window.height/2 end
-    if t.colour==nil then t.colour={{1,0xFFFFFF,1}} end
-    if t.font_name==nil then t.font_name=use_FONT end
-    if t.font_size==nil then t.font_size=14 end
-    if t.angle==nil then t.angle=0 end
-    if t.italic==nil then t.italic=false end
-    if t.oblique==nil then t.oblique=false end
-    if t.bold==nil then t.bold=false end
-    if t.radial ~= nil then
-        if #t.radial~=6 then 
-            print ("error in radial table")
-            t.radial=nil 
-        end
-    end
-    if t.orientation==nil then t.orientation="ww" end
-    if t.h_align==nil then t.h_align="l" end
-    if t.v_align==nil then t.v_align="b" end    
-    if t.reflection_alpha == nil then t.reflection_alpha=0 end
-    if t.reflection_length == nil then t.reflection_length=1 end
-    if t.reflection_scale == nil then t.reflection_scale=1 end
-    if t.skew_x==nil then t.skew_x=0 end
-    if t.skew_y==nil then t.skew_y=0 end    
-    cairo_translate(cr,t.x,t.y)
-    cairo_rotate(cr,t.angle*math.pi/180)
-    cairo_save(cr)       
-     
-    local slant = CAIRO_FONT_SLANT_NORMAL
-    local weight = CAIRO_FONT_WEIGHT_NORMAL
-    if t.italic then slant = CAIRO_FONT_SLANT_ITALIC end
-    if t.oblique then slant = CAIRO_FONT_SLANT_OBLIQUE end
-    if t.bold then weight = CAIRO_FONT_WEIGHT_BOLD end
-    
-    cairo_select_font_face(cr, t.font_name, slant,weight)
- 
-    for i=1, #t.colour do    
-        if #t.colour[i]~=3 then 
-            print ("error in color table")
-            t.colour[i]={1,0xFFFFFF,1} 
-        end
-    end
+    if t.draw_me == true then t.draw_me = nil end
+    if t.draw_me ~= nil and conky_parse(tostring(t.draw_me)) ~= "1" then return end
 
-    local matrix0 = cairo_matrix_t:create()
-    tolua.takeownership(matrix0) 
-    local skew_x,skew_y=t.skew_x/t.font_size,t.skew_y/t.font_size
-    cairo_matrix_init (matrix0, 1,skew_y,skew_x,1,0,0)
-    cairo_transform(cr,matrix0)
-    cairo_set_font_size(cr,t.font_size)
-    local te=cairo_text_extents_t:create()
-    tolua.takeownership(te) 
-    t.text=conky_parse(t.text)
-    cairo_text_extents (cr,t.text,te)
-    set_pattern(te)
-            
-    local mx,my=0,0
-    
-    if t.h_align=="c" then
-        mx=-te.width/2-te.x_bearing
-    elseif t.h_align=="r" then
-        mx=-te.width
-    end
-    if t.v_align=="m" then
-        my=-te.height/2-te.y_bearing
-    elseif t.v_align=="t" then
-        my=-te.y_bearing
-    end
-    cairo_move_to(cr,mx,my)
-    
-    cairo_show_text(cr,t.text)
+    -- Set default values if needed
+    t.text = t.text or "Conky is good for you !"
+    t.x = t.x or conky_window.width / 2
+    t.y = t.y or conky_window.height / 2
+    t.colour = t.colour or {{1, 0xFFFFFF, 1}}
+    t.font_name = t.font_name or use_FONT
+    t.font_size = t.font_size or 14
+    t.angle = t.angle or 0
+    t.italic = t.italic or false
+    t.oblique = t.oblique or false
+    t.bold = t.bold or false
+    t.radial = t.radial and #t.radial == 6 and t.radial or nil
+    t.orientation = t.orientation or "ww"
+    t.h_align = t.h_align or "l"
+    t.v_align = t.v_align or "b"
+    t.reflection_alpha = t.reflection_alpha or 0
+    t.reflection_length = t.reflection_length or 1
+    t.reflection_scale = t.reflection_scale or 1
+    t.skew_x = t.skew_x or 0
+    t.skew_y = t.skew_y or 0
 
-     
-        
-        
-   if t.reflection_alpha ~= 0 then 
-        local matrix1 = cairo_matrix_t:create()
-		tolua.takeownership(matrix1)         
-        cairo_set_font_size(cr,t.font_size)
+    cairo_translate(cr, t.x, t.y)
+    cairo_rotate(cr, t.angle * math.pi / 180)
+    cairo_save(cr)
 
-        cairo_matrix_init (matrix1,1,0,0,-1*t.reflection_scale,0,(te.height+te.y_bearing+my)*(1+t.reflection_scale))
-        cairo_set_font_size(cr,t.font_size)
-        te=nil
-        local te=cairo_text_extents_t:create()
-        tolua.takeownership(te) 
-        cairo_text_extents (cr,t.text,te)
-        
-                
-        cairo_transform(cr,matrix1)
-        set_pattern(te)
-        cairo_move_to(cr,mx,my)
-        cairo_show_text(cr,t.text)
+    local slant = t.italic and CAIRO_FONT_SLANT_ITALIC or CAIRO_FONT_SLANT_NORMAL
+    local weight = t.bold and CAIRO_FONT_WEIGHT_BOLD or CAIRO_FONT_WEIGHT_NORMAL
 
-        local pat2 = cairo_pattern_create_linear (0,
-                                        (te.y_bearing+te.height+my),
-                                        0,
-                                        te.y_bearing+my)
-        cairo_pattern_add_color_stop_rgba (pat2, 0,1,0,0,1-t.reflection_alpha)
-        cairo_pattern_add_color_stop_rgba (pat2, t.reflection_length,0,0,0,1)    
-        
-        --line is not drawn but with a size of zero, the mask won't be nice
-        cairo_set_line_width(cr,1)
-        local dy=te.x_bearing
-        if dy<0 then dy=dy*(-1) end
-        cairo_rectangle(cr,mx+te.x_bearing,te.y_bearing+te.height+my,te.width+dy,-te.height*1.05)
-        cairo_clip_preserve(cr)
-        cairo_set_operator(cr,CAIRO_OPERATOR_CLEAR)
-        --cairo_stroke(cr)
-        cairo_mask(cr,pat2)
-        cairo_pattern_destroy(pat2)
-        cairo_set_operator(cr,CAIRO_OPERATOR_OVER)
-        te=nil
+    cairo_select_font_face(cr, t.font_name, slant, weight)
+    cairo_set_font_size(cr, t.font_size)
+
+    local te = cairo_text_extents_t:create()
+    tolua.takeownership(te)
+    t.text = conky_parse(t.text)
+    cairo_text_extents(cr, t.text, te)
+
+    set_pattern(te, t.colour)
+
+    local mx, my = calculate_alignment_offsets(t, te)
+    cairo_move_to(cr, mx, my)
+    cairo_show_text(cr, t.text)
+
+    if t.reflection_alpha ~= 0 then
+        draw_reflection(t, te, mx, my)
     end
-    
 end
 
+function set_pattern(te, colours)
+    if #colours == 1 then
+        cairo_set_source_rgba(cr, rgb_to_r_g_b2(colours[1]))
+    else
+        local pat = t.radial and cairo_pattern_create_radial(t.radial[1], t.radial[2], t.radial[3], t.radial[4], t.radial[5], t.radial[6]) or
+                    cairo_pattern_create_linear(linear_orientation(te))
+        for i = 1, #colours do
+            cairo_pattern_add_color_stop_rgba(pat, colours[i][1], rgb_to_r_g_b2(colours[i]))
+        end
+        cairo_set_source(cr, pat)
+        cairo_pattern_destroy(pat)
+    end
+end
 
-function linear_orientation(t,te)
-    local w,h=te.width,te.height
-    local xb,yb=te.x_bearing,te.y_bearing
-    
-    if t.h_align=="c" then
-        xb=xb-w/2
-    elseif t.h_align=="r" then
-        xb=xb-w
-       end    
-    if t.v_align=="m" then
-        yb=-h/2
-    elseif t.v_align=="t" then
-        yb=0
-       end    
-    local p=0
-    if t.orientation=="nn" then
-        p={xb+w/2,yb,xb+w/2,yb+h}
-    elseif t.orientation=="ne" then
-        p={xb+w,yb,xb,yb+h}
-    elseif t.orientation=="ww" then
-        p={xb,h/2,xb+w,h/2}
-    elseif vorientation=="se" then
-        p={xb+w,yb+h,xb,yb}
-    elseif t.orientation=="ss" then
-        p={xb+w/2,yb+h,xb+w/2,yb}
-    elseif t.orientation=="ee" then
-        p={xb+w,h/2,xb,h/2}        
-    elseif t.orientation=="sw" then
-        p={xb,yb+h,xb+w,yb}
-    elseif t.orientation=="nw" then
-        p={xb,yb,xb+w,yb+h}
+function calculate_alignment_offsets(t, te)
+    local mx, my = 0, 0
+    if t.h_align == "c" then
+        mx = -te.width / 2 - te.x_bearing
+    elseif t.h_align == "r" then
+        mx = -te.width
+    end
+    if t.v_align == "m" then
+        my = -te.height / 2 - te.y_bearing
+    elseif t.v_align == "t" then
+        my = -te.y_bearing
+    end
+    return mx, my
+end
+
+function draw_reflection(t, te, mx, my)
+    local matrix1 = cairo_matrix_t:create()
+    tolua.takeownership(matrix1)
+    cairo_set_font_size(cr, t.font_size)
+    cairo_matrix_init(matrix1, 1, 0, 0, -t.reflection_scale, 0, (te.height + te.y_bearing + my) * (1 + t.reflection_scale))
+    cairo_transform(cr, matrix1)
+    set_pattern(te, t.colour)
+    cairo_move_to(cr, mx, my)
+    cairo_show_text(cr, t.text)
+
+    local pat2 = cairo_pattern_create_linear(0, (te.y_bearing + te.height + my), 0, te.y_bearing + my)
+    cairo_pattern_add_color_stop_rgba(pat2, 0, 1, 0, 0, 1 - t.reflection_alpha)
+    cairo_pattern_add_color_stop_rgba(pat2, t.reflection_length, 0, 0, 0, 1)
+
+    cairo_set_line_width(cr, 1)
+    local dy = te.x_bearing
+    if dy < 0 then dy = -dy end
+    cairo_rectangle(cr, mx + te.x_bearing, te.y_bearing + te.height + my, te.width + dy, -te.height * 1.05)
+    cairo_clip_preserve(cr)
+    cairo_set_operator(cr, CAIRO_OPERATOR_CLEAR)
+    cairo_mask(cr, pat2)
+    cairo_pattern_destroy(pat2)
+    cairo_set_operator(cr, CAIRO_OPERATOR_OVER)
+end
+
+function linear_orientation(te)
+    local xb, yb = te.x_bearing, te.y_bearing
+    if t.h_align == "c" then
+        xb = xb - te.width / 2
+    elseif t.h_align == "r" then
+        xb = xb - te.width
+    end
+    if t.v_align == "m" then
+        yb = -te.height / 2
+    elseif t.v_align == "t" then
+        yb = 0
+    end
+    local p
+    if t.orientation == "nn" then
+        p = {xb + te.width / 2, yb, xb + te.width / 2, yb + te.height}
+    elseif t.orientation == "ne" then
+        p = {xb + te.width, yb, xb, yb + te.height}
+    elseif t.orientation == "ww" then
+        p = {xb, te.height / 2, xb + te.width, te.height / 2}
+    elseif t.orientation == "se" then
+        p = {xb + te.width, yb + te.height, xb, yb}
+    elseif t.orientation == "ss" then
+        p = {xb + te.width / 2, yb + te.height, xb + te.width / 2, yb}
+    elseif t.orientation == "ee" then
+        p = {xb + te.width, te.height / 2, xb, te.height / 2}
+    elseif t.orientation == "sw" then
+        p = {xb, yb + te.height, xb + te.width, yb}
+    elseif t.orientation == "nw" then
+        p = {xb, yb, xb + te.width, yb + te.height}
     end
     return p
 end

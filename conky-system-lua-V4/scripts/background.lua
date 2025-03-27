@@ -1,6 +1,6 @@
 -- background.lua
 -- by @wim66
--- June 8 2024
+-- v2 v2 27-march-2024
 
 -- Ensure the correct path to settings.lua is set
 local script_path = debug.getinfo(1, 'S').source:match[[^@?(.*[\/])[^\/]-$]] -- Get the path of the current script

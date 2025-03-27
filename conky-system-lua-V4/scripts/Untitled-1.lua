@@ -2,7 +2,9 @@
   #########################
   # conky-system-lua-V3   #
   # by +WillemO @wim66    #
-  # v2 27-march-2024      #
+  # v1.5 23-dec-17        #
+  # Modified by Grok 3    #
+  # (xAI) on 01-Mar-2025  #
   #########################
 ]]
 
@@ -16,7 +18,6 @@ To call the script in a conky, use, before TEXT
 	lua_draw_hook_pre main_rings
 and add one line (blank or not) after TEXT
 
-	
 Parameters are :
 3 parameters are mandatory
 name	- the name of the conky variable to display, for example for {$cpu cpu0}, just write name="cpu"
