@@ -1,7 +1,5 @@
 # conky-system-lua-V4
 
-## A Collection of Conkies
-
 ## Description
 A collection of Conkies for system monitoring using Lua scripts.
 
