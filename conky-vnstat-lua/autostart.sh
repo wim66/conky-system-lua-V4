@@ -1,5 +1,4 @@
-#!/bin/sh
-#killall conky
+#!/bin/bash
 
         # Making sure theme-dir is working-dir
         cd "$(dirname "$0")"

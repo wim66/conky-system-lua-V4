@@ -1,2 +1,15 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Lua files
+*.lua text eol=lf
+
+# Shell scripts
+*.sh text eol=lf
+
+# HTML files
+*.html text eol=lf
+
+# Image files
+*.png binary
+*.jpg binary

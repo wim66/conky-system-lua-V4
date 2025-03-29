@@ -1,5 +1,15 @@
- 
+# Ignore temporary files
 temp/*
+
+# Ignore directory metadata files
 *.directory
+
+# Ignore text files
 *.txt
 
+# Ignore Lua compiled files
+*.luac
+
+# Ignore system files
+.DS_Store
+Thumbs.db
