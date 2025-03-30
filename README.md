@@ -12,10 +12,11 @@ A collection of Conkies for system monitoring using Lua scripts.
    ```sh
    git clone https://github.com/wim66/conky-system-lua-V4.git
 
-2. Edit all the settings.lua files inside the Conky folders
+2. Edit all the settings.lua files inside the Conky folders with ConkySettingsUpdater
 
-3. Use border-color.sh to change background and border-color
+3. Or use border-color.sh to change background and border-color
 
 4. Start the Conkies with the autostart-All.sh file
 
 <p align="center"> <img src="https://github.com/wim66/conky-system-lua-V4/blob/main/preview.png" alt="image"></p>
+<p align="center"> <img src="https://github.com/wim66/ConkySettingsUpdater/blob/main/preview.png" alt="image"></p>
