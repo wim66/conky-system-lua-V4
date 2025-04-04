@@ -5,26 +5,28 @@
 require 'cairo'
 require 'cairo_xlib'
 
--- Make sure to set the correct path to settings.lua
-local script_path = debug.getinfo(1, 'S').source:match[[^@?(.*[\/])[^\/]-$]]
-local parent_path = script_path:match("^(.*[\\/])scripts[\\/].*$")
+-- Ensure the correct path to settings.lua is set
+local script_path = debug.getinfo(1, 'S').source:match[[^@?(.*[\/])[^\/]-$]] -- Get the path of the current script
+local parent_path = script_path:match("^(.*[\\/])scripts[\\/].*$") -- Extract the parent path up to the 'scripts' directory
 
-package.path = package.path .. ";" .. parent_path .. "?.lua"
+package.path = package.path .. ";" .. parent_path .. "?.lua" -- Add the path to Lua's module search path
 
--- Attempt to load settings.lua from the parent directory
-local status, err = pcall(function() require("settings") end)
+-- Try to load settings.lua from the parent directory
+local status, err = pcall(require, "settings") -- Safe attempt to load settings.lua
 if not status then
-    print("Error loading settings.lua: " .. err)
+    local log_file = io.open(parent_path .. "error.log", "a")
+    log_file:write("Error loading settings.lua: " .. err .. "\n")
+    log_file:close()
+    return
 end
 
--- Make sure the conky_vars function is called to set the variables
+-- Ensure conky_vars function is called to set variables
 if conky_vars then
     conky_vars()
 else
     print("conky_vars function is not defined in settings.lua")
 end
 
--- Select the color based on the variable from settings.lua
 -- Parse border_COLOR string in format "0,0x000000,0.5,0xFFFFFF,1,0x000000"
 local function parse_border_color(border_color_str)
     local gradient = {}
@@ -36,7 +38,7 @@ local function parse_border_color(border_color_str)
         return gradient
     end
 
-    -- Fallback naar standaard groen-gradiënt als parsing mislukt
+    -- Fallback to default green gradient if parsing fails
     return { {0, 0x003E00, 1}, {0.5, 0x03F404, 1}, {1, 0x003E00, 1} }
 end
 
@@ -44,16 +46,15 @@ end
 local function parse_bg_color(bg_color_str)
     local hex, alpha = bg_color_str:match("0x(%x+),(%d+%.%d+)")
     if hex and alpha then
-        return { {1, tonumber(hex, 16), tonumber(alpha)} } -- Enkele kleur met alpha
+        return { {1, tonumber(hex, 16), tonumber(alpha)} } -- Single color with alpha
     end
-    -- Fallback naar zwart, volledig ondoorzichtig
+    -- Fallback to black, fully opaque
     return { {1, 0x000000, 1} }
 end
 
--- Stel de variabelen in op basis van settings.lua
-local border_color = parse_border_color(border_COLOR) -- Gradiënt voor de rand
-local bg_color = parse_bg_color(bg_COLOR)             -- Achtergrondkleur
-
+-- Set variables based on settings.lua
+local border_color = parse_border_color(border_COLOR) -- Gradient for the border
+local bg_color = parse_bg_color(bg_COLOR)             -- Background color
 local boxes_settings = {
     -- Base background
     {
@@ -90,24 +91,6 @@ local function draw_rounded_rectangle(cr, x, y, w, h, r)
     cairo_close_path(cr)
 end
 
-local function draw_base(cr, box)
-    cairo_set_source_rgba(cr, ((box.colour[1][2] & 0xFF0000) >> 16) / 255, ((box.colour[1][2] & 0x00FF00) >> 8) / 255, (box.colour[1][2] & 0x0000FF) / 255, box.colour[1][3])
-    draw_rounded_rectangle(cr, box.x, box.y, box.w, box.h, box.corners[1][2])
-    cairo_fill(cr)
-end
-
-local function draw_border(cr, box)
-    local gradient = cairo_pattern_create_linear(table.unpack(box.linear_gradient))
-    for _, color in ipairs(box.colour) do
-        cairo_pattern_add_color_stop_rgba(gradient, color[1], ((color[2] & 0xFF0000) >> 16) / 255, ((color[2] & 0x00FF00) >> 8) / 255, (color[2] & 0x0000FF) / 255, color[3])
-    end
-    cairo_set_source(cr, gradient)
-    cairo_set_line_width(cr, box.border)
-    draw_rounded_rectangle(cr, box.x + box.border/2, box.y + box.border/2, box.w - box.border, box.h - box.border, box.corners[1][2] - box.border/2)
-    cairo_stroke(cr)
-    cairo_pattern_destroy(gradient)
-end
-
 function conky_draw_background()
     if conky_window == nil then
         return
@@ -119,9 +102,31 @@ function conky_draw_background()
     for _, box in ipairs(boxes_settings) do
         if box.draw_me then
             if box.type == "base" then
-                draw_base(cr, box)
+                cairo_set_source_rgba(cr, 
+                    ((box.colour[1][2] & 0xFF0000) >> 16) / 255,
+                    ((box.colour[1][2] & 0x00FF00) >> 8) / 255,
+                    (box.colour[1][2] & 0x0000FF) / 255,
+                    box.colour[1][3])
+                draw_rounded_rectangle(cr, box.x, box.y, box.w, box.h, box.corners[1][2])
+                cairo_fill(cr)
             elseif box.type == "border" then
-                draw_border(cr, box)
+                local gradient = cairo_pattern_create_linear(table.unpack(box.linear_gradient))
+                for _, color in ipairs(box.colour) do
+                    cairo_pattern_add_color_stop_rgba(gradient, 
+                        color[1],
+                        ((color[2] & 0xFF0000) >> 16) / 255,
+                        ((color[2] & 0x00FF00) >> 8) / 255,
+                        (color[2] & 0x0000FF) / 255,
+                        color[3])
+                end
+                cairo_set_source(cr, gradient)
+                cairo_set_line_width(cr, box.border)
+                draw_rounded_rectangle(cr, 
+                    box.x + box.border/2, box.y + box.border/2,
+                    box.w - box.border, box.h - box.border,
+                    box.corners[1][2] - box.border/2)
+                cairo_stroke(cr)
+                cairo_pattern_destroy(gradient)
             end
         end
     end

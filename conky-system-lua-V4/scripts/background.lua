@@ -27,7 +27,6 @@ else
     print("conky_vars function is not defined in settings.lua")
 end
 
--- Select color based on variable from settings.lua
 -- Parse border_COLOR string in format "0,0x000000,0.5,0xFFFFFF,1,0x000000"
 local function parse_border_color(border_color_str)
     local gradient = {}
@@ -39,7 +38,7 @@ local function parse_border_color(border_color_str)
         return gradient
     end
 
-    -- Fallback naar standaard groen-gradiënt als parsing mislukt
+    -- Fallback to default green gradient if parsing fails
     return { {0, 0x003E00, 1}, {0.5, 0x03F404, 1}, {1, 0x003E00, 1} }
 end
 
@@ -47,15 +46,15 @@ end
 local function parse_bg_color(bg_color_str)
     local hex, alpha = bg_color_str:match("0x(%x+),(%d+%.%d+)")
     if hex and alpha then
-        return { {1, tonumber(hex, 16), tonumber(alpha)} } -- Enkele kleur met alpha
+        return { {1, tonumber(hex, 16), tonumber(alpha)} } -- Single color with alpha
     end
-    -- Fallback naar zwart, volledig ondoorzichtig
+    -- Fallback to black, fully opaque
     return { {1, 0x000000, 1} }
 end
 
--- Stel de variabelen in op basis van settings.lua
-local border_color = parse_border_color(border_COLOR) -- Gradiënt voor de rand
-local bg_color = parse_bg_color(bg_COLOR)             -- Achtergrondkleur
+-- Set variables based on settings.lua
+local border_color = parse_border_color(border_COLOR) -- Gradient for the border
+local bg_color = parse_bg_color(bg_COLOR)             -- Background color
 local boxes_settings = {
     {
         type = "base",
