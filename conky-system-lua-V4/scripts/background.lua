@@ -1,6 +1,6 @@
 -- background.lua
 -- by @wim66
--- v2 v2 27-march-2024
+-- v2.1 4-April-2024
 
 -- Ensure the correct path to settings.lua is set
 local script_path = debug.getinfo(1, 'S').source:match[[^@?(.*[\/])[^\/]-$]] -- Get the path of the current script
@@ -25,26 +25,34 @@ else
 end
 
 -- Select color based on variable from settings.lua
-local color_options = {
-    green = { {0, 0x003E00, 1}, {0.5, 0x03F404, 1}, {1, 0x003E00, 1} },
-    orange = { {0, 0xE05700, 1}, {0.5, 0xFFD145, 1}, {1, 0xE05700, 1} },
-    blue = { {0, 0x0000ba, 1}, {0.5, 0x8cc7ff, 1}, {1, 0x0000ba, 1} },
-    black = { {0, 0x2b2b2b, 1}, {0.5, 0xa3a3a3, 1}, {1 ,0x2b2b2b, 1} },
-    red = { {0, 0x5c0000, 1}, {0.5, 0xff0000, 1}, {1 ,0x5c0000, 1} }
-}
+-- Parse border_COLOR string in format "0,0x000000,0.5,0xFFFFFF,1,0x000000"
+local function parse_border_color(border_color_str)
+    local gradient = {}
+    for position, color in border_color_str:gmatch("([%d%.]+),0x(%x+)") do
+        table.insert(gradient, {tonumber(position), tonumber(color, 16), 1})
+    end
 
-local bgcolor_options = {
-    black_50 = { {1, 0x000000, 0.5} },
-    black_25 = { {1, 0x000000, 0.25} },
-    black_75 = { {1, 0x000000, 0.75} },
-    black_100 = { {1, 0x000000, 1} },
-    dark_100 = { {1, 0x23263A, 1} },
-    blue = { {1, 0x0000ba, 0.5} }
-}
+    if #gradient == 3 then
+        return gradient
+    end
 
-local border_color = color_options[border_COLOR] or color_options.green
-local bg_color = bgcolor_options[bg_COLOR] or bgcolor_options.black_100
+    -- Fallback naar standaard groen-gradiënt als parsing mislukt
+    return { {0, 0x003E00, 1}, {0.5, 0x03F404, 1}, {1, 0x003E00, 1} }
+end
 
+-- Parse bg_COLOR string into a Conky-compatible table
+local function parse_bg_color(bg_color_str)
+    local hex, alpha = bg_color_str:match("0x(%x+),(%d+%.%d+)")
+    if hex and alpha then
+        return { {1, tonumber(hex, 16), tonumber(alpha)} } -- Enkele kleur met alpha
+    end
+    -- Fallback naar zwart, volledig ondoorzichtig
+    return { {1, 0x000000, 1} }
+end
+
+-- Stel de variabelen in op basis van settings.lua
+local border_color = parse_border_color(border_COLOR) -- Gradiënt voor de rand
+local bg_color = parse_bg_color(bg_COLOR)             -- Achtergrondkleur
 local boxes_settings = {
     {
         type = "base",

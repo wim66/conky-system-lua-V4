@@ -2,7 +2,7 @@
 #########################
 # conky-system-lua-V3   #
 # by +WillemO @wim66    #
-# v2 v2 27-march-2024   #
+# v2.1 4-April-2024     #
 #########################
 ]]
 
@@ -21,6 +21,7 @@ local COLORS = {
     SECONDARY = {{0, 0xFAAD3E, 1}},
     HIGHLIGHT = {{0, 0xDCE142, 1}},
     SUCCESS = {{0, 0x42E147, 1}},
+    PROCESS = {{0, 0x42E147, 1}},  -- Color for process names and CPU usage
     GRADIENT = {{0.35, 0xE7660B, 1}, {0.8, 0xDCE142, 1}, {0.99, 0xE7660B, 1}}
 }
 
@@ -209,8 +210,8 @@ function processes_block(xc)
         local process_name = conky_parse("${top name " .. i .. "}")
         process_name = string.sub(process_name, 1, max_width)  -- Limit to 18 characters
         
-        insert_process_entry(process_entries, process_name, "Dejavu Sans Mono", 16, 20, base_y + 16 + (i-1) * 18, {{0, 0x42E147, alpha}}, "l")
-        insert_process_entry(process_entries, conky_parse("${top cpu " .. i .. "}%"), "Dejavu Sans Mono", 16, 228, base_y + 16 + (i-1) * 18, {{0, 0x42E147, alpha}}, "r")
+        insert_process_entry(process_entries, process_name, "Dejavu Sans Mono", 16, 20, base_y + 16 + (i-1) * 18, {{0, COLORS.PROCESS[1][2], alpha}}, "l")
+        insert_process_entry(process_entries, conky_parse("${top cpu " .. i .. "}%"), "Dejavu Sans Mono", 16, 228, base_y + 16 + (i-1) * 18, {{0, COLORS.PROCESS[1][2], alpha}}, "r")
     end
     
     table.insert(process_entries, 1, {
