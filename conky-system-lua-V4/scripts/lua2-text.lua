@@ -7,6 +7,7 @@
 ]]
 
 require 'cairo'
+require 'cairo_xlib'
 
 -- Configuration constants
 local CONFIG = {

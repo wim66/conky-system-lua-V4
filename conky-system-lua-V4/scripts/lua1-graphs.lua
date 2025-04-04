@@ -102,6 +102,7 @@ v1.1 (07/01/2011) Add draw_me parameter and correct memory leaks, thanks to "Cre
 ]]
 
 require 'cairo'
+require 'cairo_xlib'
 
 function set_settings()
 	graph_settings={

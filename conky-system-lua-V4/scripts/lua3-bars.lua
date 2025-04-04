@@ -93,6 +93,7 @@ v2.1 (07 Jan. 2011) Add draw_me parameter and correct memory leaks, thanks to "C
 ]]
 
 require 'cairo'
+require 'cairo_xlib'
 
 -- Helper function to merge tables (default values with user settings)
 local function merge_tables(defaults, user_settings)

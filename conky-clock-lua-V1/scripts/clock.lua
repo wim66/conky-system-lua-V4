@@ -1,5 +1,6 @@
 
 require 'cairo'
+require 'cairo_xlib'
 
 --[[CLOCK SHADED WIDGET by wlourf
 	http://u-scripts.blogspot.com/

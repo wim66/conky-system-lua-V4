@@ -2,6 +2,9 @@
 -- by @wim66
 -- v2.1 4-April-2024
 
+require 'cairo'
+require 'cairo_xlib'
+
 -- Ensure the correct path to settings.lua is set
 local script_path = debug.getinfo(1, 'S').source:match[[^@?(.*[\/])[^\/]-$]] -- Get the path of the current script
 local parent_path = script_path:match("^(.*[\\/])scripts[\\/].*$") -- Extract the parent path up to the 'scripts' directory

@@ -2,6 +2,9 @@
 -- by @wim66
 -- v2.1 4-April-2024
 
+require 'cairo'
+require 'cairo_xlib'
+
 -- Ensure the correct path to settings.lua
 local script_path = debug.getinfo(1, 'S').source:match[[^@?(.*[\/])[^\/]-$]]
 local parent_path = script_path:match("^(.*[\\/])scripts[\\/].*$")

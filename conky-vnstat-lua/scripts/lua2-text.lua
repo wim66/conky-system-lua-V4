@@ -91,6 +91,7 @@ v1.42   09/02/2011  Correct bug for orientation="ee"
 
 ]]
 require 'cairo'
+require 'cairo_xlib'
 
 -- Define rgb_to_r_g_b2 function before it is used
 local function rgb_to_r_g_b2(tcolour)

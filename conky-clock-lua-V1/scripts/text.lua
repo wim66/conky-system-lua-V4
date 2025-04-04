@@ -93,6 +93,7 @@ v1.42   09/02/2011  Correct bug for orientation="ee"
 ]]
 
 require 'cairo'
+require 'cairo_xlib'
 
 function conky_draw_text()
     if conky_window == nil then return end
