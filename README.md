@@ -4,7 +4,8 @@
 A collection of Conkies for system monitoring using Lua scripts.
 
 ## Requirements
-- vnstat 1.18: [Download here](https://github.com/vergoh/vnstat/releases/tag/v1.18)
+- vnstat
+- bc
 - Fonts: [Candlescript](https://www.dafont.com/candlescript.font) & [Zekton](https://www.dafont.com/zekton.font)
 
 ## Installation

@@ -27,11 +27,11 @@ else
     print("conky_vars function is not defined in settings.lua")
 end
 
--- Parse border_COLOR string in format "0,0x000000,0.5,0xFFFFFF,1,0x000000"
+-- Parse border_COLOR string in format "0,0xRRGGBB,<alpha>,0.5,0xRRGGBB,<alpha>,1,0xRRGGBB,<alpha>"
 local function parse_border_color(border_color_str)
     local gradient = {}
-    for position, color in border_color_str:gmatch("([%d%.]+),0x(%x+)") do
-        table.insert(gradient, {tonumber(position), tonumber(color, 16), 1})
+    for position, color, alpha in border_color_str:gmatch("([%d%.]+),0x(%x+),([%d%.]+)") do
+        table.insert(gradient, {tonumber(position), tonumber(color, 16), tonumber(alpha)})
     end
 
     if #gradient == 3 then
@@ -44,17 +44,18 @@ end
 
 -- Parse bg_COLOR string into a Conky-compatible table
 local function parse_bg_color(bg_color_str)
-    local hex, alpha = bg_color_str:match("0x(%x+),(%d+%.%d+)")
+    local hex, alpha = bg_color_str:match("0x(%x+),([%d%.]+)")
     if hex and alpha then
-        return { {1, tonumber(hex, 16), tonumber(alpha)} } -- Single color with alpha
+        return { {1, tonumber(hex, 16), tonumber(alpha)} }
     end
-    -- Fallback to black, fully opaque
+    -- Fallback to black, fully opaque if parsing fails
     return { {1, 0x000000, 1} }
 end
 
 -- Set variables based on settings.lua
 local border_color = parse_border_color(border_COLOR) -- Gradient for the border
 local bg_color = parse_bg_color(bg_COLOR)             -- Background color
+
 local boxes_settings = {
     -- Base background
     {
