@@ -6,6 +6,7 @@ A collection of Conkies for system monitoring using Lua scripts.
 ## Requirements
 - vnstat
 - bc
+- jq
 - Fonts: [Candlescript](https://www.dafont.com/candlescript.font) & [Zekton](https://www.dafont.com/zekton.font)
 
 ## Installation
@@ -13,8 +14,14 @@ A collection of Conkies for system monitoring using Lua scripts.
    ```sh
    git clone https://github.com/wim66/conky-system-lua-V4.git
 
-2. Edit all the settings.lua files inside the Conky folders with ConkySettingsUpdater
+## Usage
+Install the required fonts by downloading and installing them from the provided links.
 
-4. Start the Conkies with the autostart-All.sh file
+Edit all the settings.lua files inside the Conky folders with ConkySettingsUpdater.
+
+Start the Conkies with the autostart-All.sh file:
+sh
+
+    ./autostart-All.sh
 
 <p align="center"> <img src="https://github.com/wim66/conky-system-lua-V4/blob/main/preview.png" alt="image"></p>
