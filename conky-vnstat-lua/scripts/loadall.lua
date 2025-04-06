@@ -1,3 +1,6 @@
+-- conky-vnstat-lua V4
+-- by @wim66
+-- v4 6-April-2024
 
 -- Set the path to the scripts foder
 package.path = "./scripts/?.lua"
@@ -13,11 +16,3 @@ function conky_main()
 
 end
 
---[[
-#########################
-# conky-vnstat-lua      #
-# by +WillemO @wim66    #
-#  v1.5 23-dec-17       #
-#                       #
-#########################
-]]

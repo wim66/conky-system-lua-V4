@@ -4,10 +4,12 @@
 A collection of Conkies for system monitoring using Lua scripts.
 
 ## Requirements
+- Conky with Lua and Cairo enabled
 - vnstat
 - bc
 - jq
 - Fonts: [Candlescript](https://www.dafont.com/candlescript.font) & [Zekton](https://www.dafont.com/zekton.font)
+- DejaVu fonts (install via package manager)
 
 ## Installation
 1. Clone the repository:

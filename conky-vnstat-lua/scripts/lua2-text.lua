@@ -1,10 +1,6 @@
---[[
-#########################
-# conky-vnstat-lua      #
-# by +WillemO @wim66    #
-#  v2 27-march-2024     #
-#########################
-]]
+-- conky-vnstat-lua V4
+-- by @wim66
+-- v4 6-April-2024
 
 --[[TEXT WIDGET v1.42 by Wlourf 07 Feb. 2011
 

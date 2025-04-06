@@ -1,11 +1,8 @@
 #!/bin/bash
 
-#########################
-# vnstat.sh             #
-# Updated for vnstat 2+ #
-# by @wim66             #
-# v6 4-april-2025       #
-#########################
+# conky-vnstat-lua V4
+# by @wim66
+# v4 6-April-2024
 
 # Required tools: vnstat, jq, bc, awk, grep, date
 

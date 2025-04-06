@@ -1,11 +1,6 @@
-
---[[
-#########################
-# conky-system-lua-V3   #
-# by +WillemO @wim66    #
-# v2 27-march-2024      #
-#########################
-]]
+-- conky-system-lua V4
+-- by @wim66
+-- v4 6-April-2024
 
 --[[ GRAPH widget v1.1 by wlourf (07.01.2011)
 	this widget draws some graphs with some effects 

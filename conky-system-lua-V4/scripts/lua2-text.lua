@@ -1,10 +1,6 @@
---[[
-#########################
-# conky-system-lua-V3   #
-# by +WillemO @wim66    #
-# v2.1 4-April-2024     #
-#########################
-]]
+-- conky-system-lua V4
+-- by @wim66
+-- v4 6-April-2024
 
 require 'cairo'
 require 'cairo_xlib'
