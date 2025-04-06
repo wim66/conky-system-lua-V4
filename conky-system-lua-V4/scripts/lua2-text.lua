@@ -19,7 +19,7 @@ local COLORS = {
     HIGHLIGHT = {{0, 0xDCE142, 1}},
     SUCCESS = {{0, 0x42E147, 1}},
     PROCESS = {{0, 0x42E147, 1}},  -- Color for process names and CPU usage
-    GRADIENT = {{0.35, 0xE7660B, 1}, {0.8, 0xDCE142, 1}, {0.99, 0xE7660B, 1}}
+    GRADIENT = {{0., 0xE7660B, 1}, {0.5, 0xDCE142, 1}, {1, 0xE7660B, 1}}
 }
 
 -- Network variables
