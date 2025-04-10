@@ -87,8 +87,21 @@ v1.42   09/02/2011  Correct bug for orientation="ee"
 
 ]]
 
+-- Import the required Cairo libraries
 require 'cairo'
-require 'cairo_xlib'
+-- Try to require the 'cairo_xlib' module safely
+local status, cairo_xlib = pcall(require, 'cairo_xlib')
+
+if not status then
+    -- If the module is not found, fall back to a dummy table
+    -- This dummy table redirects all unknown keys to the global namespace (_G)
+    -- This allows usage of global Cairo functions like cairo_xlib_surface_create
+    cairo_xlib = setmetatable({}, {
+        __index = function(_, k)
+            return _G[k]
+        end
+    })
+end
 
 function conky_draw_text()
     if conky_window == nil then return end

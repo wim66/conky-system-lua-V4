@@ -88,8 +88,21 @@ v2.1 (07 Jan. 2011) Add draw_me parameter and correct memory leaks, thanks to "C
 
 ]]
 
+-- Import the required Cairo libraries
 require 'cairo'
-require 'cairo_xlib'
+-- Try to require the 'cairo_xlib' module safely
+local status, cairo_xlib = pcall(require, 'cairo_xlib')
+
+if not status then
+    -- If the module is not found, fall back to a dummy table
+    -- This dummy table redirects all unknown keys to the global namespace (_G)
+    -- This allows usage of global Cairo functions like cairo_xlib_surface_create
+    cairo_xlib = setmetatable({}, {
+        __index = function(_, k)
+            return _G[k]
+        end
+    })
+end
 
 -- Helper function to merge tables (default values with user settings)
 local function merge_tables(defaults, user_settings)

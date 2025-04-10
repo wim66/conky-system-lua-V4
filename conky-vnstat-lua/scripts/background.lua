@@ -3,7 +3,6 @@
 -- v4 6-April-2024
 
 require 'cairo'
-require 'cairo_xlib'
 
 -- Get the path of the current script using debug info
 local script_path = debug.getinfo(1, 'S').source:match[[^@?(.*[/\])[^/\]-$]]
