@@ -76,6 +76,7 @@ MONDAY=$(date -d "$TODAY - $DAYS_SINCE_MONDAY days" +%Y-%m-%d 2>/dev/null) || { 
 
 MONDAY_YEAR=$(date -d "$MONDAY" +%Y 2>/dev/null) || { echo "Error: Failed to get Monday’s year." >&2; exit 1; }
 MONDAY_MONTH=$(date -d "$MONDAY" +%-m 2>/dev/null) || { echo "Error: Failed to get Monday’s month." >&2; exit 1; }
+TODAY_YEAR=$(date -d "$TODAY" +%Y 2>/dev/null) || { echo "Error: Failed to get today’s year." >&2; exit 1; }
 TODAY_MONTH=$(date -d "$TODAY" +%-m 2>/dev/null) || { echo "Error: Failed to get today’s month." >&2; exit 1; }
 MONDAY_DAY=$(date -d "$MONDAY" +%-d 2>/dev/null) || { echo "Error: Failed to get Monday’s day." >&2; exit 1; }
 TODAY_DAY=$(date -d "$TODAY" +%-d 2>/dev/null) || { echo "Error: Failed to get today’s day." >&2; exit 1; }
@@ -84,12 +85,10 @@ TODAY_DAY=$(date -d "$TODAY" +%-d 2>/dev/null) || { echo "Error: Failed to get t
 FILTERED_DATA=$(echo "$json" | jq -r "
   .interfaces[0].traffic.day |
   map(select(
-    (.date.year == $MONDAY_YEAR and
-     .date.month == $MONDAY_MONTH and
-     .date.day >= $MONDAY_DAY) or
-    (.date.year == $MONDAY_YEAR and
-     .date.month == $TODAY_MONTH and
-     .date.day <= $TODAY_DAY)
+    .date.year == $MONDAY_YEAR and
+    .date.month == $MONDAY_MONTH and
+    .date.day >= $MONDAY_DAY and
+    .date.day <= $TODAY_DAY
   ))
 ")
 
