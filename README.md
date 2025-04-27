@@ -5,6 +5,7 @@ A collection of Conkies for system monitoring using Lua scripts.
 
 ## Requirements
 - Conky with Lua and Cairo enabled
+- lm-sensors
 - vnstat
 - bc
 - jq
