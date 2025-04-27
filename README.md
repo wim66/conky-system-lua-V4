@@ -22,8 +22,8 @@ To use these Conkies, ensure the following dependencies are installed:
 - **vnstat**: For network statistics
 - **bc** and **jq**: For command-line calculations and JSON parsing
 - **Fonts**:
-    - Candlescript
-    - Zekton
+    - [Candlescript](https://www.dafont.com/candlescript.font)
+    - [Zekton](https://www.dafont.com/zekton.font)
     - DejaVu fonts (installable via your package manager)
 
 ## Installation
