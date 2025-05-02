@@ -110,7 +110,7 @@ local function rgb_to_r_g_b2(tcolour)
 end
 
 local function load_vnstat_data()
-    conky_parse("${execi 60 scripts/vnstat.sh}")
+    conky_parse("${execi 30 scripts/vnstat.sh}")
     local vnstat_lines = {}
     local file = io.open("scripts/vnstat.txt", "r")
     if file then

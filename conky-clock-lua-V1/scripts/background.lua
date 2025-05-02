@@ -1,33 +1,32 @@
--- conky-clock-lua V4
+-- background.lua
 -- by @wim66
--- v4 6-April-2024
+-- April 17 2025
 
+-- === Required Cairo Modules ===
 require 'cairo'
+-- Try to require the 'cairo_xlib' module safely
+local status, cairo_xlib = pcall(require, 'cairo_xlib')
 
--- Get the path of the current script using debug info
-local script_path = debug.getinfo(1, 'S').source:match[[^@?(.*[/\])[^/\]-$]]
+if not status then
+    cairo_xlib = setmetatable({}, {
+        __index = function(_, k)
+            return _G[k]
+        end
+    })
+end
 
--- Extract parent directory path up to 'scripts', works cross-platform (Windows/Linux)
-local parent_path = script_path:match("^(.*[/\\])scripts[/\\].*$") or ""
-
--- Add the parent path to the Lua package path so we can require files from it
+-- === Load settings.lua from parent directory ===
+local script_path = debug.getinfo(1, 'S').source:match[[^@?(.*[\/])[^\/]-$]]
+local parent_path = script_path:match("^(.*[\\/])resources[\\/].*$") or ""
 package.path = package.path .. ";" .. parent_path .. "?.lua"
 
--- Try to safely load settings.lua
-local status, err = pcall(require, "settings")
-if not status then
-    local log_file = io.open(parent_path .. "error.log", "a")
-    log_file:write("Error loading settings.lua: " .. err .. "\n")
-    log_file:close()
-    return
-end
+local status, err = pcall(function() require("settings") end)
+if not status then print("Error loading settings.lua: " .. err); return end
+if not conky_vars then print("conky_vars function is not defined in settings.lua"); return end
+conky_vars()
 
--- Ensure the function conky_vars exists and call it to initialize variables
-if conky_vars then
-    conky_vars()
-else
-    print("conky_vars function is not defined in settings.lua")
-end
+-- === Utility ===
+local unpack = table.unpack or unpack  -- Compatibility for Lua 5.1 and newer
 
 -- Parse a border color string like "0,0xRRGGBB,alpha,..." into a gradient table
 local function parse_border_color(border_color_str)
@@ -56,78 +55,150 @@ end
 local border_color = parse_border_color(border_COLOR)
 local bg_color = parse_bg_color(bg_COLOR)
 
--- UI box definitions with their drawing properties
+-- === All drawable elements ===
 local boxes_settings = {
+    -- Background
     {
-        type = "base",
-        x = 2, y = 2, w = 254, h = 128,
-        colour = bg_color,
-        corners = { {20, 20, 0, 0} }, -- top left, top right, bottom right, bottom left
+        type = "background",
+        x = 0, y = 5, w = 254, h = 128,
+        centre_x = true,  -- Optioneel centreren
+        corners = {20, 20, 0 ,0},  -- TL, TR, BR, BL
+        rotation = 0,  -- Toegevoegd voor rotatiemogelijkheid
         draw_me = true,
+        colour = bg_color
     },
+    -- Second background layer with linear gradient
+    {
+        type = "layer2",
+        x = 0, y = 5, w = 254, h = 128,
+        centre_x = true,
+        corners = {20, 20, 0 ,0},  -- TL, TR, BR, BL
+        rotation = 0,  -- Toegevoegd voor rotatiemogelijkheid
+        draw_me = true,
+        linear_gradient = {127, 0, 127, 128}, -- Aangepast aan x en w
+        colours = {{0, 0xFFFFFF, 0.05},{0.5, 0xC2C2C2, 0.2},{1, 0xFFFFFF, 0.05}},
+    },
+    -- Border
     {
         type = "border",
-        x = 2, y = 2, w = 254, h = 128,
-        colour = border_color,
-        linear_gradient = {0, 64, 254, 64},
-        corners = { {20, 20, 0, 0} }, -- Same corner styling as above
-        border = 4,
+        x = 0, y = 5, w = 254, h = 128,
+        centre_x = true,
+        corners = {20, 20, 0 ,0},  -- TL, TR, BR, BL
+        rotation = 0,  -- Toegevoegd voor rotatiemogelijkheid
         draw_me = true,
-    },
+        border = 4,
+        colour = border_color,
+        linear_gradient = {127, 0, 127, 128}  -- Aangepast aan x en w
+    }
 }
 
--- Draw a rectangle with **independent** corner radii
-local function draw_custom_corners(cr, x, y, w, h, corners)
-    local tl, tr, br, bl = table.unpack(corners)
+-- === Helper: Convert hex to RGBA ===
+local function hex_to_rgba(hex, alpha)
+    return ((hex >> 16) & 0xFF) / 255, ((hex >> 8) & 0xFF) / 255, (hex & 0xFF) / 255, alpha
+end
+-- === Helper: Draw custom rounded rectangle ===
+local function draw_custom_rounded_rectangle(cr, x, y, w, h, r)
+    local tl, tr, br, bl = unpack(r)
 
     cairo_new_path(cr)
     cairo_move_to(cr, x + tl, y)
     cairo_line_to(cr, x + w - tr, y)
-    cairo_arc(cr, x + w - tr, y + tr, tr, -math.pi/2, 0)
+    if tr > 0 then cairo_arc(cr, x + w - tr, y + tr, tr, -math.pi/2, 0) else cairo_line_to(cr, x + w, y) end
     cairo_line_to(cr, x + w, y + h - br)
-    cairo_arc(cr, x + w - br, y + h - br, br, 0, math.pi/2)
+    if br > 0 then cairo_arc(cr, x + w - br, y + h - br, br, 0, math.pi/2) else cairo_line_to(cr, x + w, y + h) end
     cairo_line_to(cr, x + bl, y + h)
-    cairo_arc(cr, x + bl, y + h - bl, bl, math.pi/2, math.pi)
+    if bl > 0 then cairo_arc(cr, x + bl, y + h - bl, bl, math.pi/2, math.pi) else cairo_line_to(cr, x, y + h) end
     cairo_line_to(cr, x, y + tl)
-    cairo_arc(cr, x + tl, y + tl, tl, math.pi, 3*math.pi/2)
+    if tl > 0 then cairo_arc(cr, x + tl, y + tl, tl, math.pi, 3*math.pi/2) else cairo_line_to(cr, x, y) end
     cairo_close_path(cr)
 end
 
--- Main drawing function to be called by Conky
+-- === Helper: Center X position ===
+local function get_centered_x(canvas_width, box_width)
+    return (canvas_width - box_width) / 2
+end
+
+-- === Main drawing function ===
 function conky_draw_background()
     if conky_window == nil then return end
 
-    -- Create Cairo context based on Conky window
     local cs = cairo_xlib_surface_create(conky_window.display, conky_window.drawable, conky_window.visual, conky_window.width, conky_window.height)
     local cr = cairo_create(cs)
+    local canvas_width = conky_window.width
 
-    -- Draw each box based on its type
     for _, box in ipairs(boxes_settings) do
         if box.draw_me then
-            local corners = box.corners[1] -- corners = { TL, TR, BR, BL }
+            local x, y, w, h = box.x, box.y, box.w, box.h
+            if box.centre_x then x = get_centered_x(canvas_width, w) end
 
-            if box.type == "base" then
-                local r, g, b = ((box.colour[1][2] >> 16) & 0xFF) / 255, ((box.colour[1][2] >> 8) & 0xFF) / 255, (box.colour[1][2] & 0xFF) / 255
-                cairo_set_source_rgba(cr, r, g, b, box.colour[1][3])
-                draw_custom_corners(cr, box.x, box.y, box.w, box.h, corners)
+            local cx, cy = x + w / 2, y + h / 2
+            local angle = (box.rotation or 0) * math.pi / 180
+
+            if box.type == "background" then
+                -- Apply rotation for the background
+                cairo_save(cr)
+                cairo_translate(cr, cx, cy)
+                cairo_rotate(cr, angle)
+                cairo_translate(cr, -cx, -cy)
+
+                cairo_set_source_rgba(cr, hex_to_rgba(box.colour[1][2], box.colour[1][3]))
+                draw_custom_rounded_rectangle(cr, x, y, w, h, box.corners)
                 cairo_fill(cr)
 
-            elseif box.type == "border" then
-                local gradient = cairo_pattern_create_linear(table.unpack(box.linear_gradient))
-                for _, color in ipairs(box.colour) do
-                    local r, g, b = ((color[2] >> 16) & 0xFF) / 255, ((color[2] >> 8) & 0xFF) / 255, (color[2] & 0xFF) / 255
-                    cairo_pattern_add_color_stop_rgba(gradient, color[1], r, g, b, color[3])
+                cairo_restore(cr)
+
+            elseif box.type == "layer2" then
+                -- Create the gradient in the original coordinate system
+                local grad = cairo_pattern_create_linear(unpack(box.linear_gradient))
+                for _, color in ipairs(box.colours) do
+                    cairo_pattern_add_color_stop_rgba(grad, color[1], hex_to_rgba(color[2], color[3]))
                 end
-                cairo_set_source(cr, gradient)
+                cairo_set_source(cr, grad)
+
+                -- Apply rotation only to the shape
+                cairo_save(cr)
+                cairo_translate(cr, cx, cy)
+                cairo_rotate(cr, angle)
+                cairo_translate(cr, -cx, -cy)
+
+                draw_custom_rounded_rectangle(cr, x, y, w, h, box.corners)
+                cairo_fill(cr)
+
+                cairo_restore(cr)
+                cairo_pattern_destroy(grad)
+
+            elseif box.type == "border" then
+                -- Create the gradient in the original coordinate system
+                local grad = cairo_pattern_create_linear(unpack(box.linear_gradient))
+                for _, color in ipairs(box.colour) do
+                    cairo_pattern_add_color_stop_rgba(grad, color[1], hex_to_rgba(color[2], color[3]))
+                end
+                cairo_set_source(cr, grad)
+
+                -- Apply rotation only to the shape
+                cairo_save(cr)
+                cairo_translate(cr, cx, cy)
+                cairo_rotate(cr, angle)
+                cairo_translate(cr, -cx, -cy)
+
                 cairo_set_line_width(cr, box.border)
-                draw_custom_corners(cr, box.x + box.border/2, box.y + box.border/2, box.w - box.border, box.h - box.border, {
-                    math.max(0, corners[1] - box.border/2),
-                    math.max(0, corners[2] - box.border/2),
-                    math.max(0, corners[3] - box.border/2),
-                    math.max(0, corners[4] - box.border/2)
-                })
+                draw_custom_rounded_rectangle(
+                    cr,
+                    x + box.border / 2,
+                    y + box.border / 2,
+                    w - box.border,
+                    h - box.border,
+                    {
+                        math.max(0, box.corners[1] - box.border / 2),
+                        math.max(0, box.corners[2] - box.border / 2),
+                        math.max(0, box.corners[3] - box.border / 2),
+                        math.max(0, box.corners[4] - box.border / 2)
+                    }
+                )
                 cairo_stroke(cr)
-                cairo_pattern_destroy(gradient)
+
+                cairo_restore(cr)
+                cairo_pattern_destroy(grad)
             end
         end
     end

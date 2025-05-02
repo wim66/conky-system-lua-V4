@@ -25,6 +25,6 @@ function conky_vars()
     -- bg_COLOR: Background color and opacity for the widget.
     -- Format: "color,opacity"
     -- Example: "0x1d1e28,0.75" sets a dark purple background with 75% opacity.
-    bg_COLOR = "0x1d1d2e,0.78"
+    bg_COLOR = "0x1d1d2e,0.87"
 end
 
