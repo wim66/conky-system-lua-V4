@@ -70,29 +70,36 @@ down_today=$(echo "$json" | jq -r ".interfaces[0].traffic.day[] | select(.date.y
 up_today=$(echo "$json" | jq -r ".interfaces[0].traffic.day[] | select(.date.year==$year and .date.month==$month and .date.day==$day) | .tx")
 
 # Calculate week data since Monday
-TODAY=$(date +%Y-%m-%d 2>/dev/null) || { echo "Error: Failed to get today’s date." >&2; exit 1; }
-DAYS_SINCE_MONDAY=$(($(date -d "$TODAY" +%u 2>/dev/null) - 1)) || { echo "Error: Failed to calculate days since Monday." >&2; exit 1; }
-MONDAY=$(date -d "$TODAY - $DAYS_SINCE_MONDAY days" +%Y-%m-%d 2>/dev/null) || { echo "Error: Failed to calculate Monday’s date." >&2; exit 1; }
+TODAY=$(date +%Y-%m-%d)
+DAYS_SINCE_MONDAY=$(( ($(date +%u) - 1) ))
+if [ $DAYS_SINCE_MONDAY -lt 0 ]; then
+    DAYS_SINCE_MONDAY=6
+fi
 
-MONDAY_YEAR=$(date -d "$MONDAY" +%Y 2>/dev/null) || { echo "Error: Failed to get Monday’s year." >&2; exit 1; }
-MONDAY_MONTH=$(date -d "$MONDAY" +%-m 2>/dev/null) || { echo "Error: Failed to get Monday’s month." >&2; exit 1; }
-TODAY_YEAR=$(date -d "$TODAY" +%Y 2>/dev/null) || { echo "Error: Failed to get today’s year." >&2; exit 1; }
-TODAY_MONTH=$(date -d "$TODAY" +%-m 2>/dev/null) || { echo "Error: Failed to get today’s month." >&2; exit 1; }
-MONDAY_DAY=$(date -d "$MONDAY" +%-d 2>/dev/null) || { echo "Error: Failed to get Monday’s day." >&2; exit 1; }
-TODAY_DAY=$(date -d "$TODAY" +%-d 2>/dev/null) || { echo "Error: Failed to get today’s day." >&2; exit 1; }
+if [ $(date +%u) -eq 1 ]; then
+    MONDAY=$(date +%Y-%m-%d)
+else
+    MONDAY=$(date -d "$TODAY - $DAYS_SINCE_MONDAY days" +%Y-%m-%d)
+fi
 
-# Filter day data for the current week (Monday to today)
+MONDAY_YEAR=$(date -d "$MONDAY" +%Y)
+MONDAY_MONTH=$(date -d "$MONDAY" +%-m)
+TODAY_YEAR=$(date -d "$TODAY" +%Y)
+TODAY_MONTH=$(date -d "$TODAY" +%-m)
+MONDAY_DAY=$(date -d "$MONDAY" +%-d)
+TODAY_DAY=$(date -d "$TODAY" +%-d)
+
 FILTERED_DATA=$(echo "$json" | jq -r "
   .interfaces[0].traffic.day |
   map(select(
-    .date.year == $MONDAY_YEAR and
-    .date.month == $MONDAY_MONTH and
-    .date.day >= $MONDAY_DAY and
-    .date.day <= $TODAY_DAY
+    ((.date.year == $TODAY_YEAR and .date.month == $TODAY_MONTH and .date.day <= $TODAY_DAY) or
+    (.date.year == $MONDAY_YEAR and .date.month == $MONDAY_MONTH and .date.day >= $MONDAY_DAY)) and
+    ((.date.year == $MONDAY_YEAR and .date.month == $MONDAY_MONTH and .date.day >= $MONDAY_DAY and .date.year == $TODAY_YEAR and .date.month == $TODAY_MONTH and .date.day <= $TODAY_DAY) or
+    (.date.year == $MONDAY_YEAR and .date.month == $MONDAY_MONTH and .date.day >= $MONDAY_DAY and (.date.year != $TODAY_YEAR or .date.month != $TODAY_MONTH)) or
+    (.date.year == $TODAY_YEAR and .date.month == $TODAY_MONTH and .date.day <= $TODAY_DAY and (.date.year != $MONDAY_YEAR or .date.month != $MONDAY_MONTH)))
   ))
 ")
 
-# Calculate total rx and tx for the week
 down_week=$(echo "$FILTERED_DATA" | jq -r 'map(.rx) | add // 0')
 up_week=$(echo "$FILTERED_DATA" | jq -r 'map(.tx) | add // 0')
 
