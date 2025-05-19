@@ -62,7 +62,7 @@ To use these Conkies, ensure the following dependencies are installed:
 
 	* **Debian/Ubuntu/Linux Mint:**
 		```sh
-		sudo apt install conky lm-sensors vnstat bc jq
+		sudo apt install conky-all lm-sensors vnstat bc jq
 		```
 	* **Arch Linux:**
 		```sh
