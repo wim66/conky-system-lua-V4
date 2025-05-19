@@ -25,6 +25,11 @@ function conky_vars()
     -- bg_COLOR: Background color and opacity for the widget.
     -- Format: "color,opacity"
     -- Example: "0x1d1e28,0.75" sets a dark purple background with 75% opacity.
-    bg_COLOR = "0x1d1d2e,0.87"
+    bg_COLOR = "0x1d1d2e,0.90"
+
+    -- layer_2: Defines the gradient for the second layer of the Conky widget.
+    -- Format: "start_angle,color1,opacity1,midpoint,color2,opacity2,steps,color3,opacity3"
+    -- Example: "0,0x00007f,0.50,0.5,0x00aaff,0.50,1,0x00007f,0.50" creates a blue gradient with 50% opacity.
+    layer_2 = "0,0xffffff,0.05,0.5,0xc2c2c2,0.20,1,0xffffff,0.05"
 end
 

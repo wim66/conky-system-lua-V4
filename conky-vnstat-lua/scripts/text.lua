@@ -1,6 +1,7 @@
--- conky-vnstat-lua V4
+-- text.lua
+-- conky-vnstat-lua V4.1
 -- by @wim66
--- v4 6-April-2024
+-- May 17, 2025
 
 --[[TEXT WIDGET v1.42 by Wlourf 07 Feb. 2011
 

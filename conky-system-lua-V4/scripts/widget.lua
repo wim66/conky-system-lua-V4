@@ -1,6 +1,7 @@
--- background.lua
+-- widget.lua
+-- conky-system-lua V4.1
 -- by @wim66
--- April 17 2025
+-- May 17, 2025
 
 -- === Required Cairo Modules ===
 require 'cairo'
@@ -15,82 +16,71 @@ if not status then
     })
 end
 
+package.path = "./scripts/?.lua"
+-- Load lua1-graphs.lua (as module)
+local ok, err = pcall(require, "lua1-graphs")
+if not ok then print("Error loading lua1-graphs.lua: " .. err) end
+
+-- Load lua2-text.lua (as module)
+local ok, err = pcall(require, "lua2-text")
+if not ok then print("Error loading lua2-text.lua: " .. err) end
+
+-- Load lua3-bars.lua (as module)
+local ok, err = pcall(require, "lua3-bars")
+if not ok then print("Error loading lua3-bars.lua: " .. err) end
+
 -- === Load settings.lua from parent directory ===
 local script_path = debug.getinfo(1, 'S').source:match[[^@?(.*[\/])[^\/]-$]]
 local parent_path = script_path:match("^(.*[\\/])resources[\\/].*$") or ""
 package.path = package.path .. ";" .. parent_path .. "?.lua"
 
+-- Load settings
 local status, err = pcall(function() require("settings") end)
-if not status then print("Error loading settings.lua: " .. err); return end
-if not conky_vars then print("conky_vars function is not defined in settings.lua"); return end
+if not status then 
+    print("Error loading settings.lua: " .. err)
+    return 
+end
+if not conky_vars then 
+    print("conky_vars function is not defined in settings.lua")
+    return 
+end
 conky_vars()
 
 -- === Utility ===
 local unpack = table.unpack or unpack  -- Compatibility for Lua 5.1 and newer
 
--- Parse a border color string like "0,0xRRGGBB,alpha,..." into a gradient table
-local function parse_border_color(border_color_str)
+-- Color parsing functions
+local function parse_color_gradient(color_str, default_gradient)
     local gradient = {}
-    for position, color, alpha in border_color_str:gmatch("([%d%.]+),0x(%x+),([%d%.]+)") do
+    for position, color, alpha in color_str:gmatch("([%d%.]+),0x(%x+),([%d%.]+)") do
         table.insert(gradient, {tonumber(position), tonumber(color, 16), tonumber(alpha)})
     end
-    -- Return a default gradient if parsing fails
-    if #gradient == 3 then
-        return gradient
-    end
-    return { {0, 0x003E00, 1}, {0.5, 0x03F404, 1}, {1, 0x003E00, 1} }
+    return (#gradient >= 3) and gradient or default_gradient
 end
 
--- Parse a background color string like "0xRRGGBB,alpha" into a table
-local function parse_bg_color(bg_color_str)
-    local hex, alpha = bg_color_str:match("0x(%x+),([%d%.]+)")
+local function parse_single_color(color_str, default_color)
+    local hex, alpha = color_str:match("0x(%x+),([%d%.]+)")
     if hex and alpha then
-        return { {1, tonumber(hex, 16), tonumber(alpha)} }
+        return {{1, tonumber(hex, 16), tonumber(alpha)}}
     end
-    -- Fallback to solid black if parsing fails
-    return { {1, 0x000000, 1} }
+    return default_color
 end
 
 -- Read color values from settings.lua variables
-local border_color = parse_border_color(border_COLOR)
-local bg_color = parse_bg_color(bg_COLOR)
+local border_color = parse_color_gradient(border_COLOR or "0,0x003E00,1,0.5,0x03F404,1,1,0x003E00,1", 
+                                          {{0, 0x003E00, 1}, {0.5, 0x03F404, 1}, {1, 0x003E00, 1}})
+local bg_color = parse_single_color(bg_COLOR or "0x000000,0.5", {{1, 0x000000, 0.5}})
+local layer2_color = parse_color_gradient(layer_2 or "0,0x55007f,0.5,0.5,0xff69ff,0.5,1,0x55007f,0.5", 
+                                          {{0, 0x55007f, 0.5}, {0.5, 0xff69ff, 0.5}, {1, 0x55007f, 0.5}})
 
--- === All drawable elements ===
-local boxes_settings = {
-    -- Background
-    {
-        type = "background",
-        x = 0, y = 5, w = 254, h = 128,
-        centre_x = true,  -- Optioneel centreren
-        corners = {20, 20, 0 ,0},  -- TL, TR, BR, BL
-        rotation = 0,  -- Toegevoegd voor rotatiemogelijkheid
-        draw_me = true,
-        colour = bg_color
-    },
-    -- Second background layer with linear gradient
-    {
-        type = "layer2",
-        x = 0, y = 5, w = 254, h = 128,
-        centre_x = true,
-        corners = {20, 20, 0 ,0},  -- TL, TR, BR, BL
-        rotation = 0,  -- Toegevoegd voor rotatiemogelijkheid
-        draw_me = true,
-        linear_gradient = {127, 0, 127, 128}, -- Aangepast aan x en w
-        colours = {{0, 0xFFFFFF, 0.05},{0.5, 0xC2C2C2, 0.2},{1, 0xFFFFFF, 0.05}},
-    },
-    -- Border
-    {
-        type = "border",
-        x = 0, y = 5, w = 254, h = 128,
-        centre_x = true,
-        corners = {20, 20, 0 ,0},  -- TL, TR, BR, BL
-        rotation = 0,  -- Toegevoegd voor rotatiemogelijkheid
-        draw_me = true,
-        border = 4,
-        colour = border_color,
-        linear_gradient = {127, 0, 127, 128}  -- Aangepast aan x en w
-    }
-}
+-- === Helper: Convert hex to RGBA ===
+local function hex_to_rgba(hex, alpha)
+    return ((hex >> 16) & 0xFF) / 255, ((hex >> 8) & 0xFF) / 255, (hex & 0xFF) / 255, alpha
+end
+
+-- Background layout
+local layout = require("background-layout")
+local boxes_settings = layout.boxes_settings
 
 -- === Helper: Convert hex to RGBA ===
 local function hex_to_rgba(hex, alpha)
@@ -205,4 +195,11 @@ function conky_draw_background()
 
     cairo_destroy(cr)
     cairo_surface_destroy(cs)
+end
+
+function conky_main()
+    conky_draw_background()
+    conky_draw_text()
+    conky_main_bars()
+    conky_draw_graph()
 end

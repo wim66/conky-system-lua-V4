@@ -1,6 +1,7 @@
--- conky-system-lua V4
+-- lua3-bars.lua
+-- conky-system-lua V4.1
 -- by @wim66
--- v4 6-April-2024
+-- May 17, 2025
 
 --[[ BARGRAPH WIDGET
 	v2.1 by wlourf (07 Jan. 2011)

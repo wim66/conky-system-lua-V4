@@ -1,6 +1,7 @@
--- conky-clock-lua V4
+-- clock.lua
+-- conky-clock-lua V4.1
 -- by @wim66
--- v4 6-April-2024
+-- May 17, 2025
 
 -- Import the required Cairo libraries
 require 'cairo'

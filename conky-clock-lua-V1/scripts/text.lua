@@ -1,3 +1,4 @@
+-- text.lua
 -- conky-clock-lua V4
 -- by @wim66
 -- v4 6-April-2024

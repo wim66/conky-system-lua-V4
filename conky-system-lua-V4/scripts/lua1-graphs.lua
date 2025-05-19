@@ -1,6 +1,7 @@
--- conky-system-lua V4
+-- lua1-graphs
+-- conky-system-lua V4.1
 -- by @wim66
--- v4 6-April-2024
+-- May 17, 2025
 
 --[[ GRAPH widget v1.1 by wlourf (07.01.2011)
 	this widget draws some graphs with some effects 
@@ -114,8 +115,6 @@ end
 
 function set_settings()
 	graph_settings={
-        
-        
 {
 	name="cpu",
 	arg="cpu0",
@@ -192,7 +191,7 @@ function check_settings(t)
 	return 0
 end
 
-function conky_main_graph()
+function conky_draw_graph()
 
     if conky_window == nil then return end
 	    
