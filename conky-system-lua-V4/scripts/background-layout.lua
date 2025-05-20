@@ -1,11 +1,13 @@
 -- layout.lua
 -- conky-system-lua V4.1
 -- by @wim66
--- May 17, 2025
+-- May 20, 2025
 
 -- Defines the box-layout for background, layer2, and border
+-- Supports any number of gradient stops (minimum 2)
 
 -- Ensure settings.lua is already loaded before this module
+
 local M = {}
 
 -- === Color parsers ===
@@ -14,7 +16,7 @@ local function parse_color_gradient(str, default)
     for position, color, alpha in str:gmatch("([%d%.]+),0x(%x+),([%d%.]+)") do
         table.insert(gradient, {tonumber(position), tonumber(color, 16), tonumber(alpha)})
     end
-    return #gradient == 3 and gradient or default
+    return #gradient >= 2 and gradient or default
 end
 
 local function parse_solid_color(str, default)
@@ -26,9 +28,20 @@ local function parse_solid_color(str, default)
 end
 
 -- === Defaults ===
-local DEFAULT_BORDER_COLOR = { {0, 0x003E00, 1}, {0.5, 0x03F404, 1}, {1, 0x003E00, 1} }
-local DEFAULT_BG_COLOR     = { {1, 0x1D1D2E, 0.9} }
-local DEFAULT_LAYER2_COLOR = {{0, 0xFFFFFF, 0.05},{0.5, 0xC2C2C2, 0.2},{1, 0xFFFFFF, 0.05}}
+local DEFAULT_BORDER_COLOR = {
+    {0,   0x003E00, 1},
+    {0.5, 0x03F404, 1},
+    {1,   0x003E00, 1}
+}
+local DEFAULT_BG_COLOR = {
+    {1, 0x1D1D2E, 0.9}
+}
+local DEFAULT_LAYER2_COLOR = {
+    {0,   0xFFFFFF, 0.05},
+    {0.33,0xC2C2C2, 0.2},
+    {0.66,0x666666, 0.15},
+    {1,   0xFFFFFF, 0.05}
+}
 
 -- === Reading from settings.lua ===
 local border_color  = parse_color_gradient(border_COLOR or "", DEFAULT_BORDER_COLOR)
@@ -41,7 +54,7 @@ M.boxes_settings = {
         type = "background",
         x = 0, y = 6, w = 242, h = 638,
         centre_x = true,
-        corners = {0, 0, 0 ,0},  -- TL, TR, BR, BL
+        corners = {0, 0, 0, 0},  -- TL, TR, BR, BL
         rotation = 0,
         draw_me = true,
         colour = bg_color
@@ -51,7 +64,7 @@ M.boxes_settings = {
         type = "layer2",
         x = 0, y = 6, w = 242, h = 638,
         centre_x = true,
-        corners = {0, 0, 0 ,0},  -- TL, TR, BR, BL
+        corners = {0, 0, 0, 0},  -- TL, TR, BR, BL
         rotation = 0,
         draw_me = true,
         linear_gradient = {0, 0, 0, 638},
@@ -62,7 +75,7 @@ M.boxes_settings = {
         type = "border",
         x = 0, y = 0, w = 254, h = 650,
         centre_x = true,
-        corners = {0, 0, 0 ,0},  -- TL, TR, BR, BL
+        corners = {0, 0, 0, 0},  -- TL, TR, BR, BL
         rotation = 0,
         draw_me = true,
         border = 4,

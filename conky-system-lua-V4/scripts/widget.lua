@@ -1,95 +1,67 @@
 -- widget.lua
 -- conky-system-lua V4.1
 -- by @wim66
--- May 17, 2025
+-- May 20, 2025
 
 -- === Required Cairo Modules ===
 require 'cairo'
--- Try to require the 'cairo_xlib' module safely
 local status, cairo_xlib = pcall(require, 'cairo_xlib')
-
 if not status then
-    cairo_xlib = setmetatable({}, {
-        __index = function(_, k)
-            return _G[k]
-        end
-    })
+    cairo_xlib = setmetatable({}, { __index = function(_, k) return _G[k] end })
 end
 
+-- === Load external modules ===
 package.path = "./scripts/?.lua"
--- Load lua1-graphs.lua (as module)
-local ok, err = pcall(require, "lua1-graphs")
-if not ok then print("Error loading lua1-graphs.lua: " .. err) end
-
--- Load lua2-text.lua (as module)
-local ok, err = pcall(require, "lua2-text")
-if not ok then print("Error loading lua2-text.lua: " .. err) end
-
--- Load lua3-bars.lua (as module)
-local ok, err = pcall(require, "lua3-bars")
-if not ok then print("Error loading lua3-bars.lua: " .. err) end
+local function try_require(modname)
+    local ok, err = pcall(require, modname)
+    if not ok then
+        print("Error loading " .. modname .. ": " .. tostring(err))
+        os.exit(1)
+    end
+end
+try_require("lua1-graphs")
+try_require("lua2-text")
+try_require("lua3-bars")
 
 -- === Load settings.lua from parent directory ===
 local script_path = debug.getinfo(1, 'S').source:match[[^@?(.*[\/])[^\/]-$]]
 local parent_path = script_path:match("^(.*[\\/])resources[\\/].*$") or ""
 package.path = package.path .. ";" .. parent_path .. "?.lua"
 
--- Load settings
-local status, err = pcall(function() require("settings") end)
-if not status then 
-    print("Error loading settings.lua: " .. err)
-    return 
-end
-if not conky_vars then 
-    print("conky_vars function is not defined in settings.lua")
-    return 
-end
+local ok, err = pcall(function() require("settings") end)
+if not ok then print("Error loading settings.lua: " .. err) os.exit(1) end
+if not conky_vars then print("conky_vars function is not defined in settings.lua") os.exit(1) end
 conky_vars()
 
--- === Utility ===
-local unpack = table.unpack or unpack  -- Compatibility for Lua 5.1 and newer
+-- === Helpers ===
+local unpack = table.unpack or unpack
 
--- Color parsing functions
-local function parse_color_gradient(color_str, default_gradient)
+local function parse_color_gradient(str, default_gradient)
     local gradient = {}
-    for position, color, alpha in color_str:gmatch("([%d%.]+),0x(%x+),([%d%.]+)") do
-        table.insert(gradient, {tonumber(position), tonumber(color, 16), tonumber(alpha)})
+    if type(str) == "string" then
+        for position, color, alpha in str:gmatch("([%d%.]+),0x(%x+),([%d%.]+)") do
+            table.insert(gradient, {tonumber(position), tonumber(color, 16), tonumber(alpha)})
+        end
     end
     return (#gradient >= 3) and gradient or default_gradient
 end
 
-local function parse_single_color(color_str, default_color)
-    local hex, alpha = color_str:match("0x(%x+),([%d%.]+)")
-    if hex and alpha then
-        return {{1, tonumber(hex, 16), tonumber(alpha)}}
+local function parse_single_color(str, default_color)
+    if type(str) == "string" then
+        local hex, alpha = str:match("0x(%x+),([%d%.]+)")
+        if hex and alpha then
+            return {{1, tonumber(hex, 16), tonumber(alpha)}}
+        end
     end
     return default_color
 end
 
--- Read color values from settings.lua variables
-local border_color = parse_color_gradient(border_COLOR or "0,0x003E00,1,0.5,0x03F404,1,1,0x003E00,1", 
-                                          {{0, 0x003E00, 1}, {0.5, 0x03F404, 1}, {1, 0x003E00, 1}})
-local bg_color = parse_single_color(bg_COLOR or "0x000000,0.5", {{1, 0x000000, 0.5}})
-local layer2_color = parse_color_gradient(layer_2 or "0,0x55007f,0.5,0.5,0xff69ff,0.5,1,0x55007f,0.5", 
-                                          {{0, 0x55007f, 0.5}, {0.5, 0xff69ff, 0.5}, {1, 0x55007f, 0.5}})
-
--- === Helper: Convert hex to RGBA ===
 local function hex_to_rgba(hex, alpha)
     return ((hex >> 16) & 0xFF) / 255, ((hex >> 8) & 0xFF) / 255, (hex & 0xFF) / 255, alpha
 end
 
--- Background layout
-local layout = require("background-layout")
-local boxes_settings = layout.boxes_settings
-
--- === Helper: Convert hex to RGBA ===
-local function hex_to_rgba(hex, alpha)
-    return ((hex >> 16) & 0xFF) / 255, ((hex >> 8) & 0xFF) / 255, (hex & 0xFF) / 255, alpha
-end
--- === Helper: Draw custom rounded rectangle ===
 local function draw_custom_rounded_rectangle(cr, x, y, w, h, r)
     local tl, tr, br, bl = unpack(r)
-
     cairo_new_path(cr)
     cairo_move_to(cr, x + tl, y)
     cairo_line_to(cr, x + w - tr, y)
@@ -103,15 +75,24 @@ local function draw_custom_rounded_rectangle(cr, x, y, w, h, r)
     cairo_close_path(cr)
 end
 
--- === Helper: Center X position ===
 local function get_centered_x(canvas_width, box_width)
     return (canvas_width - box_width) / 2
 end
 
+-- === Color values from settings.lua variables ===
+local border_color = parse_color_gradient(border_COLOR or "0,0x003E00,1,0.5,0x03F404,1,1,0x003E00,1",
+    {{0, 0x003E00, 1}, {0.5, 0x03F404, 1}, {1, 0x003E00, 1}})
+local bg_color = parse_single_color(bg_COLOR or "0x000000,0.5", {{1, 0x000000, 0.5}})
+local layer2_color = parse_color_gradient(layer_2 or "0,0x55007f,0.5,0.5,0xff69ff,0.5,1,0x55007f,0.5",
+    {{0, 0x55007f, 0.5}, {0.5, 0xff69ff, 0.5}, {1, 0x55007f, 0.5}})
+
+-- === Layout import ===
+local layout = require("background-layout")
+local boxes_settings = layout.boxes_settings
+
 -- === Main drawing function ===
 function conky_draw_background()
-    if conky_window == nil then return end
-
+    if not conky_window then return end
     local cs = cairo_xlib_surface_create(conky_window.display, conky_window.drawable, conky_window.visual, conky_window.width, conky_window.height)
     local cr = cairo_create(cs)
     local canvas_width = conky_window.width
@@ -125,52 +106,38 @@ function conky_draw_background()
             local angle = (box.rotation or 0) * math.pi / 180
 
             if box.type == "background" then
-                -- Apply rotation for the background
                 cairo_save(cr)
                 cairo_translate(cr, cx, cy)
                 cairo_rotate(cr, angle)
                 cairo_translate(cr, -cx, -cy)
-
                 cairo_set_source_rgba(cr, hex_to_rgba(box.colour[1][2], box.colour[1][3]))
                 draw_custom_rounded_rectangle(cr, x, y, w, h, box.corners)
                 cairo_fill(cr)
-
                 cairo_restore(cr)
-
             elseif box.type == "layer2" then
-                -- Create the gradient in the original coordinate system
                 local grad = cairo_pattern_create_linear(unpack(box.linear_gradient))
                 for _, color in ipairs(box.colours) do
                     cairo_pattern_add_color_stop_rgba(grad, color[1], hex_to_rgba(color[2], color[3]))
                 end
                 cairo_set_source(cr, grad)
-
-                -- Apply rotation only to the shape
                 cairo_save(cr)
                 cairo_translate(cr, cx, cy)
                 cairo_rotate(cr, angle)
                 cairo_translate(cr, -cx, -cy)
-
                 draw_custom_rounded_rectangle(cr, x, y, w, h, box.corners)
                 cairo_fill(cr)
-
                 cairo_restore(cr)
                 cairo_pattern_destroy(grad)
-
             elseif box.type == "border" then
-                -- Create the gradient in the original coordinate system
                 local grad = cairo_pattern_create_linear(unpack(box.linear_gradient))
                 for _, color in ipairs(box.colour) do
                     cairo_pattern_add_color_stop_rgba(grad, color[1], hex_to_rgba(color[2], color[3]))
                 end
                 cairo_set_source(cr, grad)
-
-                -- Apply rotation only to the shape
                 cairo_save(cr)
                 cairo_translate(cr, cx, cy)
                 cairo_rotate(cr, angle)
                 cairo_translate(cr, -cx, -cy)
-
                 cairo_set_line_width(cr, box.border)
                 draw_custom_rounded_rectangle(
                     cr,
@@ -186,7 +153,6 @@ function conky_draw_background()
                     }
                 )
                 cairo_stroke(cr)
-
                 cairo_restore(cr)
                 cairo_pattern_destroy(grad)
             end

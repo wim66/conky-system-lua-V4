@@ -7,16 +7,8 @@
 require 'cairo'
 -- Try to require the 'cairo_xlib' module safely
 local status, cairo_xlib = pcall(require, 'cairo_xlib')
-
 if not status then
-    -- If the module is not found, fall back to a dummy table
-    -- This dummy table redirects all unknown keys to the global namespace (_G)
-    -- This allows usage of global Cairo functions like cairo_xlib_surface_create
-    cairo_xlib = setmetatable({}, {
-        __index = function(_, k)
-            return _G[k]
-        end
-    })
+    cairo_xlib = setmetatable({}, { __index = function(_, k) return _G[k] end })
 end
 
 -- === Load settings.lua from parent directory ===
@@ -24,22 +16,16 @@ local script_path = debug.getinfo(1, 'S').source:match[[^@?(.*[\/])[^\/]-$]]
 local parent_path = script_path:match("^(.*[\\/])resources[\\/].*$") or ""
 package.path = package.path .. ";" .. parent_path .. "?.lua"
 
--- Load settings
 local status, err = pcall(function() require("settings") end)
-if not status then 
-    print("Error loading settings.lua: " .. err)
-    return 
-end
-if not conky_vars then 
-    print("conky_vars function is not defined in settings.lua")
-    return 
-end
+if not status then print("Error loading settings.lua: " .. err) return end
+if not conky_vars then print("conky_vars function is not defined in settings.lua") return end
 conky_vars()
 
 -- Configuration constants
 local CONFIG = {
     NET_INTERFACE = var_NETWORK,  -- Set in settings.lua
     FONT_DEFAULT = "Dejavu Sans Mono",
+    FONT_SIZE_DEFAULT = 14,
     UPDATE_INTERVAL = 3,
     TEXT_MARGIN = 20,
     TEXT_WIDTH = 240,
@@ -68,26 +54,21 @@ local function concatenate_tables(tables)
     local result = {}
     for _, t in ipairs(tables) do
         if type(t) == "function" then t = t() end
-        for _, v in ipairs(t) do
-            table.insert(result, v)
-        end
+        for _, v in ipairs(t) do table.insert(result, v) end
     end
     return result
 end
 
 -- Helper function to set font
 local function set_font(cr, t)
+    local font_name = t.font_name or CONFIG.FONT_DEFAULT
+    local font_size = t.font_size or CONFIG.FONT_SIZE_DEFAULT
     local slant = CAIRO_FONT_SLANT_NORMAL
-    if t.italic then
-        slant = CAIRO_FONT_SLANT_ITALIC
-    elseif t.oblique then
-        slant = CAIRO_FONT_SLANT_OBLIQUE
-    end
-    
+    if t.italic then slant = CAIRO_FONT_SLANT_ITALIC
+    elseif t.oblique then slant = CAIRO_FONT_SLANT_OBLIQUE end
     local weight = t.bold and CAIRO_FONT_WEIGHT_BOLD or CAIRO_FONT_WEIGHT_NORMAL
-    
-    cairo_select_font_face(cr, t.font_name, slant, weight)
-    cairo_set_font_size(cr, t.font_size)
+    cairo_select_font_face(cr, font_name, slant, weight)
+    cairo_set_font_size(cr, font_size)
 end
 
 -- Helper function to set color
@@ -107,14 +88,13 @@ end
 -- Display text function
 function display_text(cr, t)
     if t.draw_me and conky_parse(tostring(t.draw_me)) ~= "1" then return end
-    
     local defaults = {
         text = "Conky is good for you!",
         x = conky_window.width/2,
         y = conky_window.height/2,
         colour = COLORS.PRIMARY,
-        font_name = "Dejavu Sans Mono",
-        font_size = 14,
+        font_name = CONFIG.FONT_DEFAULT,
+        font_size = CONFIG.FONT_SIZE_DEFAULT,
         angle = 0,
         h_align = "l",
         v_align = "b",
@@ -126,26 +106,22 @@ function display_text(cr, t)
         t[k] = t[k] or v
     end
 
+    -- Parse conky vars
+    t.text = conky_parse(t.text)
+
     cairo_save(cr)
     cairo_translate(cr, t.x, t.y)
     cairo_rotate(cr, t.angle * math.pi / 180)
-
     set_font(cr, t)
-    
     local te = cairo_text_extents_t:create()
-    if tolua and tolua.takeownership then
-        tolua.takeownership(te)
-    end
+    if tolua and tolua.takeownership then tolua.takeownership(te) end
     cairo_text_extents(cr, t.text, te)
     t.te = te
-    
     set_color(cr, t)
-    
     local mx = t.h_align == "c" and -te.width/2 or t.h_align == "r" and -te.width or 0
     local my = t.v_align == "m" and -te.height/2 or t.v_align == "t" and 0 or -te.y_bearing
     cairo_move_to(cr, mx, my)
     cairo_show_text(cr, t.text)
-    
     cairo_restore(cr)
 end
 
@@ -162,17 +138,15 @@ end
 function cpu_block(xc)
     return {
         {
-            text = conky_parse("${execi 6000 cat /proc/cpuinfo | grep -i 'Model name' -m 1 | cut -c13- | sed 's/CPU.*$//' | sed 's/  */ /g'}"),
-            font_name = "Dejavu Sans Mono",
-            font_size = 14,
+            text = "${execi 6000 cat /proc/cpuinfo | grep -i 'Model name' -m 1 | cut -c13- | sed 's/CPU.*$//' | sed 's/  */ /g'}",
+            font_size = CONFIG.FONT_SIZE_DEFAULT,
             x = CONFIG.TEXT_MARGIN,
             y = 87,
             colour = COLORS.SECONDARY
         },
         {
-            text = conky_parse("CPU: ${execi 5 sensors|grep 'Package'|awk '{print $4}'} ${cpu cpu1}%"),
-            font_name = "Dejavu Sans Mono",
-            font_size = 14,
+            text = "CPU: ${execi 5 sensors|grep 'Package'|awk '{print $4}'} ${cpu cpu1}%",
+            font_size = CONFIG.FONT_SIZE_DEFAULT,
             bold = true,
             h_align = "c",
             x = xc,
@@ -185,66 +159,60 @@ end
 function memory_block(xc)
     local base_y = 195
     return {
-        {text = "Memory", font_name = "Dejavu Sans Mono", font_size = 14, h_align = "c", x = xc, y = base_y + 9, colour = COLORS.HIGHLIGHT},
-        {text = "Used", font_name = "Dejavu Sans Mono", font_size = 14, x = CONFIG.TEXT_MARGIN, y = base_y, colour = COLORS.SECONDARY},
-        {text = conky_parse("${mem}"), font_name = "Dejavu Sans Mono", font_size = 14, x = CONFIG.TEXT_MARGIN, y = base_y + 18, colour = COLORS.SUCCESS},
-        {text = "Free", font_name = "Dejavu Sans Mono", font_size = 14, h_align = "r", x = CONFIG.TEXT_WIDTH, y = base_y, colour = COLORS.SECONDARY},
-        {text = conky_parse("${memeasyfree}"), font_name = "Dejavu Sans Mono", font_size = 14, h_align = "r", x = CONFIG.TEXT_WIDTH, y = base_y + 18, colour = COLORS.SUCCESS}
+        {text = "Memory", h_align = "c", x = xc, y = base_y + 9, colour = COLORS.HIGHLIGHT},
+        {text = "Used", x = CONFIG.TEXT_MARGIN, y = base_y, colour = COLORS.SECONDARY},
+        {text = "${mem}", x = CONFIG.TEXT_MARGIN, y = base_y + 18, colour = COLORS.SUCCESS},
+        {text = "Free", h_align = "r", x = CONFIG.TEXT_WIDTH, y = base_y, colour = COLORS.SECONDARY},
+        {text = "${memeasyfree}", h_align = "r", x = CONFIG.TEXT_WIDTH, y = base_y + 18, colour = COLORS.SUCCESS}
     }
 end
 
 function disk_block(xc)
     local base_y = 261
     return {
-        {text = "Disks", font_name = "Dejavu Sans Mono", font_size = 14, h_align = "c", x = xc, y = base_y, colour = COLORS.HIGHLIGHT},
-        {text = "Used", font_name = "Dejavu Sans Mono", font_size = 14, x = CONFIG.TEXT_MARGIN, y = base_y, colour = COLORS.SECONDARY},
-        {text = conky_parse("${fs_used /}"), font_name = "Dejavu Sans Mono", font_size = 14, x = CONFIG.TEXT_MARGIN, y = base_y + 19, colour = COLORS.SUCCESS},
-        {text = "ROOT", font_name = "Dejavu Sans Mono", font_size = 14, h_align = "c", x = xc, y = base_y + 19, colour = COLORS.SECONDARY},
-        {text = "Free", font_name = "Dejavu Sans Mono", font_size = 14, h_align = "r", x = CONFIG.TEXT_WIDTH, y = base_y, colour = COLORS.SECONDARY},
-        {text = conky_parse("${fs_free /}"), font_name = "Dejavu Sans Mono", font_size = 14, h_align = "r", x = CONFIG.TEXT_WIDTH, y = base_y + 19, colour = COLORS.SUCCESS},
-        {text = "Home", font_name = "Dejavu Sans Mono", font_size = 14, h_align = "c", x = xc, y = base_y + 54, colour = COLORS.SECONDARY},
-        {text = conky_parse("${fs_used /home/}"), font_name = "Dejavu Sans Mono", font_size = 14, x = CONFIG.TEXT_MARGIN, y = base_y + 54, colour = COLORS.SUCCESS},
-        {text = conky_parse("${fs_free /home/}"), font_name = "Dejavu Sans Mono", font_size = 14, h_align = "r", x = CONFIG.TEXT_WIDTH, y = base_y + 54, colour = COLORS.SUCCESS}
+        {text = "Disks", h_align = "c", x = xc, y = base_y, colour = COLORS.HIGHLIGHT},
+        {text = "Used", x = CONFIG.TEXT_MARGIN, y = base_y, colour = COLORS.SECONDARY},
+        {text = "${fs_used /}", x = CONFIG.TEXT_MARGIN, y = base_y + 19, colour = COLORS.SUCCESS},
+        {text = "ROOT", h_align = "c", x = xc, y = base_y + 19, colour = COLORS.SECONDARY},
+        {text = "Free", h_align = "r", x = CONFIG.TEXT_WIDTH, y = base_y, colour = COLORS.SECONDARY},
+        {text = "${fs_free /}", h_align = "r", x = CONFIG.TEXT_WIDTH, y = base_y + 19, colour = COLORS.SUCCESS},
+        {text = "Home", h_align = "c", x = xc, y = base_y + 54, colour = COLORS.SECONDARY},
+        {text = "${fs_used /home/}", x = CONFIG.TEXT_MARGIN, y = base_y + 54, colour = COLORS.SUCCESS},
+        {text = "${fs_free /home/}", h_align = "r", x = CONFIG.TEXT_WIDTH, y = base_y + 54, colour = COLORS.SUCCESS}
     }
 end
 
 function network_block(xc)
     local base_y = 355
     return {
-        {text = "Network speed", font_name = "Dejavu Sans Mono", font_size = 14, h_align = "c", x = xc, y = base_y, colour = COLORS.HIGHLIGHT},
-        {text = "Up", font_name = "Dejavu Sans Mono", font_size = 14, x = CONFIG.TEXT_MARGIN + 3, y = base_y + 20, colour = COLORS.SECONDARY},
-        {text = conky_parse(NET_VARS.UP), font_name = "Dejavu Sans Mono", font_size = 14, h_align = "r", x = 120, y = base_y + 20, colour = COLORS.SUCCESS},
-        {text = "Down", font_name = "Dejavu Sans Mono", font_size = 14, x = 142, y = base_y + 20, colour = COLORS.SECONDARY},
-        {text = conky_parse(NET_VARS.DOWN), font_name = "Dejavu Sans Mono", font_size = 14, h_align = "r", x = CONFIG.TEXT_WIDTH, y = base_y + 20, colour = COLORS.SUCCESS},
-        {text = "Session", font_name = "Dejavu Sans Mono", font_size = 14, x = CONFIG.TEXT_MARGIN + 3, y = base_y + 82, colour = COLORS.SECONDARY},
-        {text = conky_parse(NET_VARS.TOTAL_UP), font_name = "Dejavu Sans Mono", font_size = 14, h_align = "r", x = 124, y = base_y + 82, colour = COLORS.SUCCESS},
-        {text = conky_parse(NET_VARS.TOTAL_DOWN), font_name = "Dejavu Sans Mono", font_size = 14, h_align = "r", x = CONFIG.TEXT_WIDTH, y = base_y + 82, colour = COLORS.SUCCESS}
+        {text = "Network speed", h_align = "c", x = xc, y = base_y, colour = COLORS.HIGHLIGHT},
+        {text = "Up", x = CONFIG.TEXT_MARGIN + 3, y = base_y + 20, colour = COLORS.SECONDARY},
+        {text = NET_VARS.UP, h_align = "r", x = 120, y = base_y + 20, colour = COLORS.SUCCESS},
+        {text = "Down", x = 142, y = base_y + 20, colour = COLORS.SECONDARY},
+        {text = NET_VARS.DOWN, h_align = "r", x = CONFIG.TEXT_WIDTH, y = base_y + 20, colour = COLORS.SUCCESS},
+        {text = "Session", x = CONFIG.TEXT_MARGIN + 3, y = base_y + 82, colour = COLORS.SECONDARY},
+        {text = NET_VARS.TOTAL_UP, h_align = "r", x = 124, y = base_y + 82, colour = COLORS.SUCCESS},
+        {text = NET_VARS.TOTAL_DOWN, h_align = "r", x = CONFIG.TEXT_WIDTH, y = base_y + 82, colour = COLORS.SUCCESS}
     }
 end
 
 function processes_block(xc)
     local base_y = 459
     local process_entries = {}
-    local max_width = 15  -- Maximum width of the process name, corresponding to top_name_width
-
+    local max_width = 15
     for i = 1, 6 do
         local alpha = 1 - (i-1) * 0.15
-        local process_name = conky_parse("${top name " .. i .. "}")
-        process_name = string.sub(process_name, 1, max_width)  -- Limit to 15 characters
-        
+        local process_name = "${top name " .. i .. "}"
         table.insert(process_entries, {
             text = process_name,
-            font_name = "Dejavu Sans Mono",
             font_size = 16,
             x = CONFIG.TEXT_MARGIN,
-            y = base_y + 16 + (i-1)*18,  
+            y = base_y + 16 + (i-1)*18,
             colour = {{0, COLORS.PROCESS[1][2], alpha}},
             h_align = "l"
         })
-        
         table.insert(process_entries, {
-            text = conky_parse("${top cpu " .. i .. "}%"),
-            font_name = "Dejavu Sans Mono",
+            text = "${top cpu " .. i .. "}",
             font_size = 16,
             x = 228,
             y = base_y + 16 + (i-1)*18,
@@ -252,17 +220,13 @@ function processes_block(xc)
             h_align = "r"
         })
     end
-    
     table.insert(process_entries, 1, {
         text = "Processes",
-        font_name = "Dejavu Sans Mono",
-        font_size = 14,
         h_align = "c",
         x = xc,
         y = base_y,
         colour = COLORS.HIGHLIGHT
     })
-
     return process_entries
 end
 
@@ -274,31 +238,19 @@ local cache_duration = 3600  -- 1 hour
 
 -- Refresh cache for package updates
 local function update_cache()
-    local handle = io.popen("stat -c %Y " .. cache_file_apt .. " 2>/dev/null")
-    local last_update_apt = tonumber(handle:read("*a")) or 0
-    handle:close()
-    
-    handle = io.popen("stat -c %Y " .. cache_file_pacman .. " 2>/dev/null")
-    local last_update_pacman = tonumber(handle:read("*a")) or 0
-    handle:close()
-    
-    handle = io.popen("stat -c %Y " .. cache_file_aur .. " 2>/dev/null")
-    local last_update_aur = tonumber(handle:read("*a")) or 0
-    handle:close()
-    
-    if (os.time() - last_update_apt) > cache_duration then
+    local function last_update(file)
+        local h = io.popen("stat -c %Y " .. file .. " 2>/dev/null"); local t = tonumber(h:read("*a")) or 0; h:close(); return t
+    end
+    if (os.time() - last_update(cache_file_apt)) > cache_duration then
         os.execute("apt list --upgradable > " .. cache_file_apt .. " 2>/dev/null")
     end
-    
-    if (os.time() - last_update_pacman) > cache_duration then
+    if (os.time() - last_update(cache_file_pacman)) > cache_duration then
         os.execute("checkupdates > " .. cache_file_pacman .. " 2>/dev/null")
     end
-    
-    if (os.time() - last_update_aur) > cache_duration then
+    if (os.time() - last_update(cache_file_aur)) > cache_duration then
         local aur_helper = io.popen("command -v yay >/dev/null 2>&1 && echo yay || echo paru")
         local aur_helper_type = aur_helper:read("*a"):gsub("\n", "")
         aur_helper:close()
-        
         if aur_helper_type == "yay" then
             os.execute("yay -Qua > " .. cache_file_aur .. " 2>/dev/null")
         elseif aur_helper_type == "paru" then
@@ -311,11 +263,9 @@ end
 local function load_package_lines()
     local original_lines = {}
     update_cache()
-
     local package_manager = io.popen("command -v apt >/dev/null 2>&1 && echo apt || echo pacman")
     local package_manager_type = package_manager:read("*a"):gsub("\n", "")
     package_manager:close()
-    
     if package_manager_type == "apt" then
         local file = io.open(cache_file_apt, "r")
         if file then
@@ -342,11 +292,9 @@ local function load_package_lines()
             end
             file:close()
         end
-        
         local aur_helper = io.popen("command -v yay >/dev/null 2>&1 && echo yay || echo paru")
         local aur_helper_type = aur_helper:read("*a"):gsub("\n", "")
         aur_helper:close()
-        
         local file = io.open(cache_file_aur, "r")
         if file then
             for line in file:lines() do
@@ -355,12 +303,10 @@ local function load_package_lines()
             file:close()
         end
     end
-
     local update_count = #original_lines
     local updates_text = (update_count == 0) and "System is up-to-date" or tostring(update_count) .. " updates available"
     return {{
         text = updates_text,
-        font_name = "Dejavu Sans Mono",
         font_size = 12,
         bold = true,
         h_align = "c",
@@ -378,21 +324,17 @@ end
 
 -- Bitcoin price function
 function bitcoin_price_block(xc)
-    local base_y = 615  -- Adjusted to avoid overlap with updates_block
+    local base_y = 615
     return {
         {
             text = "Bitcoin Price",
-            font_name = "Dejavu Sans Mono",
-            font_size = 14,
             h_align = "c",
             x = xc,
             y = base_y,
             colour = COLORS.HIGHLIGHT
         },
         {
-            text = conky_parse("${execi 300 ./scripts/get_bitcoin_price.sh}${cat ./bitcoin_price.txt}"),
-            font_name = "Dejavu Sans Mono",
-            font_size = 14,
+            text = "${execi 300 ./scripts/get_bitcoin_price.sh}${cat ./bitcoin_price.txt}",
             h_align = "c",
             x = xc,
             y = base_y + 15,
@@ -415,8 +357,7 @@ function generate_text_settings(xc)
     return concatenate_tables({
         -- System info
         {{
-            text = conky_parse("${if_existing /usr/bin/lsb_release}${execi 10000 lsb_release -d | cut -f 2}${else}$distribution${endif}"),
-            font_name = "Dejavu Sans Mono",
+            text = "${if_existing /usr/bin/lsb_release}${execi 10000 lsb_release -d | cut -f 2}${else}$distribution${endif}",
             font_size = 22,
             bold = true,
             h_align = "c",
@@ -424,16 +365,12 @@ function generate_text_settings(xc)
             y = 25,
             colour = COLORS.GRADIENT
         }, {
-            text = conky_parse("$sysname ${kernel}"),
-            font_name = "Dejavu Sans Mono",
-            font_size = 14,
+            text = "$sysname ${kernel}",
             x = CONFIG.TEXT_MARGIN,
             y = 50,
             colour = COLORS.SECONDARY
         }, {
-            text = conky_parse("Uptime: ${uptime}"),
-            font_name = "Dejavu Sans Mono",
-            font_size = 14,
+            text = "Uptime: ${uptime}",
             x = CONFIG.TEXT_MARGIN,
             y = 67,
             colour = COLORS.SECONDARY
@@ -451,18 +388,10 @@ end
 -- Main function
 function conky_draw_text()
     local updates = tonumber(conky_parse("$updates")) or 0
-    if updates < CONFIG.UPDATE_INTERVAL then 
-        return 
-    end
-
-    if not conky_window then 
-        print("Error: No conky window available")
-        return 
-    end
-
+    if updates < CONFIG.UPDATE_INTERVAL then return end
+    if not conky_window then print("Error: No conky window available") return end
     local w, h = conky_window.width, conky_window.height
     local xc = w / 2
-
     local status, cs = pcall(function()
         return cairo_xlib_surface_create(
             conky_window.display,
@@ -471,18 +400,10 @@ function conky_draw_text()
             w, h
         )
     end)
-    
-    if not status then
-        error("Error creating cairo surface: " .. cs)
-    end
-
+    if not status then error("Error creating cairo surface: " .. cs) end
     local cr = cairo_create(cs)
     local text_settings = generate_text_settings(xc)
-    
-    for _, v in ipairs(text_settings) do    
-        display_text(cr, v)
-    end
-    
+    for _, v in ipairs(text_settings) do display_text(cr, v) end
     cairo_destroy(cr)
     cairo_surface_destroy(cs)
 end
