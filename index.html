@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <title>conky-system-lua-V4</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://fonts.googleapis.com/css?family=Montserrat:700|Fira+Mono&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: #121221;
+      color: #f3f3f3;
+      font-family: 'Montserrat', Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+    }
+    /* Gradient border met dubbele wrapper */
+    .gradient-border {
+      background: linear-gradient(to bottom, #003e00, #03f404, #003e00);
+      border-radius: 18px;   /* iets groter dan .container */
+      padding: 8px;          /* dikte van de border */
+      max-width: 900px;
+      margin: 40px auto;
+      box-shadow: 0 4px 24px #000a;
+      animation: fadeIn 1.3s;
+    }
+    .container {
+      background: #19192b;
+      border-radius: 14px;   /* 4px kleiner dan .gradient-border */
+      padding: 32px;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(30px);}
+      to   { opacity: 1; transform: translateY(0);}
+    }
+    .avatar {
+      display: block;
+      margin: 0 auto 24px auto;
+      border-radius: 50%;
+      width: 128px;
+      box-shadow: 0 2px 12px #0006;
+      transition: box-shadow 0.3s;
+    }
+    .avatar:hover {
+      box-shadow: 0 0 32px #00fb00, 0 0 0 6px #222;
+    }
+    h1, h2, h3 {
+      color: #c5cff5;
+      letter-spacing: 1.2px;
+    }
+    a {
+      color: #88b3fa;
+      transition: color 0.2s;
+    }
+    a:hover {
+      color: #1965f5;
+      text-decoration: underline wavy;
+    }
+    pre, code {
+      background: #2c2c3b;
+      color: #e8e8e8;
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-family: 'Fira Mono', monospace;
+    }
+    pre {
+      padding: 12px;
+      overflow-x: auto;
+    }
+    table {
+      border-collapse: collapse;
+      background: #242424;
+      margin-bottom: 1em;
+    }
+    th, td {
+      border: 1px solid #444;
+      padding: 8px 12px;
+    }
+    th {
+      background: #333;
+    }
+    hr {
+      border: 1px solid #444;
+    }
+    @media (max-width: 600px) {
+      .container { padding: 8px; }
+      .avatar { width: 90px; }
+    }
+#readme-content img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 24px auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 16px #0006;
+  transition: box-shadow 0.3s;
+}
+#readme-content img:hover {
+  box-shadow: 0 0 32px #03f404;
+}
+::selection {
+  background: #00fb00;
+  color: #19192b;
+}
+.github-btn {
+  display: inline-block;
+  background: #03f404;
+  color: #19192b;
+  padding: 8px 20px;
+  border-radius: 6px;
+  font-weight: bold;
+  text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+}
+.github-btn:hover {
+  background: #00a300;
+  color: #fff;
+}
+html {
+  scroll-behavior: smooth;
+}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+  <div class="gradient-border">
+    <div class="container">
+      <img src="https://avatars.githubusercontent.com/u/20155866?v=4" alt="Wim66 profiel" class="avatar">
+      <div id="readme-content">
+        <p>README laden...</p>
+      </div>
+      <hr>
+      <p>
+  <a href="https://github.com/wim66/conky-system-lua-V4" class="github-btn" target="_blank" rel="noopener">
+    <svg height="20" width="20" viewBox="0 0 16 16" fill="currentColor" style="vertical-align:middle; margin-right:8px;">
+      <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.5-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.19 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
+    </svg>
+    View on GitHub
+  </a>
+</p>
+    </div>
+  </div>
+  <script>
+    fetch('https://api.github.com/repos/wim66/conky-system-lua-V4/readme')
+      .then(response => response.json())
+      .then(data => {
+        const markdown = atob(data.content.replace(/\n/g, ''));
+        const html = marked.parse(markdown, { gfm: true });
+        document.getElementById('readme-content').innerHTML = html;
+      })
+      .catch(err => {
+        document.getElementById('readme-content').innerHTML = "<p>README kon niet worden geladen.</p>";
+      });
+  </script>
+</body>
+</html>
