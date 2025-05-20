@@ -1,6 +1,6 @@
 # Ignore temporary files
 temp/*
-*temp
+*tmp
 *kopie*
 
 # Ignore directory metadata files

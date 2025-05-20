@@ -52,7 +52,7 @@ local layer2_color  = parse_color_gradient(layer_2 or "", DEFAULT_LAYER2_COLOR)
 M.boxes_settings = {
     {
         type = "background",
-        x = 0, y = 11, w = 242, h = 116,
+        x = 0, y = 6, w = 242, h = 116,
         centre_x = true,
         corners = {20, 20, 0 ,0},  -- TL, TR, BR, BL
         rotation = 0,
@@ -62,18 +62,18 @@ M.boxes_settings = {
     -- Second background layer with linear gradient
     {
         type = "layer2",
-        x = 0, y =11, w = 242, h = 116,
+        x = 0, y =6, w = 242, h = 116,
         centre_x = true,
         corners = {20, 20, 0 ,0},  -- TL, TR, BR, BL
         rotation = 0,
         draw_me = true,
-        linear_gradient = {0, 0, 0, 128}, 
+        linear_gradient = {0, 6, 0, 116}, 
         colours = layer2_color,
     },
     -- Border
     {
         type = "border",
-        x = 0, y = 5, w = 254, h = 128,
+        x = 0, y = 0, w = 254, h = 128,
         centre_x = true,
         corners = {20, 20, 0 ,0},  -- TL, TR, BR, BL
         rotation = 0, 
