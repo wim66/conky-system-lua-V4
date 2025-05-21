@@ -107,7 +107,13 @@ function display_text(cr, t)
     end
 
     -- Parse conky vars
-    t.text = conky_parse(t.text)
+        t.text = conky_parse(t.text)
+
+    -- Truncate text if max_width is specified
+    if t.max_width then
+        local max_width = tonumber(t.max_width)
+        t.text = t.text:sub(1, max_width)
+    end
 
     cairo_save(cr)
     cairo_translate(cr, t.x, t.y)
@@ -199,7 +205,7 @@ end
 function processes_block(xc)
     local base_y = 459
     local process_entries = {}
-    local max_width = 15
+    local max_width = 17
     for i = 1, 6 do
         local alpha = 1 - (i-1) * 0.15
         local process_name = "${top name " .. i .. "}"
@@ -209,10 +215,11 @@ function processes_block(xc)
             x = CONFIG.TEXT_MARGIN,
             y = base_y + 16 + (i-1)*18,
             colour = {{0, COLORS.PROCESS[1][2], alpha}},
-            h_align = "l"
+            h_align = "l",
+            max_width = max_width,
         })
         table.insert(process_entries, {
-            text = "${top cpu " .. i .. "}",
+            text = "${top cpu " .. i .. "}%",
             font_size = 16,
             x = 228,
             y = base_y + 16 + (i-1)*18,
