@@ -67,7 +67,7 @@ M.boxes_settings = {
         corners = {20, 20, 0 ,0},  -- TL, TR, BR, BL
         rotation = 0,
         draw_me = true,
-        linear_gradient = {0, 6, 0, 116}, 
+        linear_gradient = {0, 0, 0, 116}, 
         colours = layer2_color,
     },
     -- Border

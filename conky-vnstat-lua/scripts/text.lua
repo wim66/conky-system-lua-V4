@@ -178,19 +178,19 @@ function conky_draw_text()
     local vnstat_lines = load_vnstat_data()
     
     local text_settings = {
-        {text = "VNSTAT", x = 20, y = 30, font_size = 20, colour = colors.primary},
-        {text = "network traffic", x = 120, y = 30, font_size = 14, colour = colors.success},
-        {text = "Down", h_align = "r", x = 140, y = 50, colour = colors.highlight},
-        {text = "Up", h_align = "r", x = 240, y = 50, colour = colors.highlight},
-        {text = "Today", x = 20, y = 70, colour = colors.highlight},
-        {text = vnstat_lines[1] or "N/A", font_name = "arial", h_align = "r", x = 140, y = 70, colour = colors.secondary},
-        {text = vnstat_lines[2] or "N/A", font_name = "arial", h_align = "r", x = 240, y = 70, colour = colors.secondary},
-        {text = "Week", x = 20, y = 90, colour = colors.highlight},
-        {text = vnstat_lines[3] or "N/A", font_name = "arial", h_align = "r", x = 140, y = 90, colour = colors.secondary},
-        {text = vnstat_lines[4] or "N/A", font_name = "arial", h_align = "r", x = 240, y = 90, colour = colors.secondary},
-        {text = "Month", x = 20, y = 110, colour = colors.highlight},
-        {text = vnstat_lines[5] or "N/A", font_name = "arial", h_align = "r", x = 140, y = 110, colour = colors.secondary},
-        {text = vnstat_lines[6] or "N/A", font_name = "arial", h_align = "r", x = 240, y = 110, colour = colors.secondary},
+        {text = "VNSTAT", x = 20, y = 20, font_size = 20, colour = colors.primary},
+        {text = "network traffic", x = 120, y = 20, font_size = 14, colour = colors.success},
+        {text = "Down", h_align = "r", x = 140, y = 40, colour = colors.highlight},
+        {text = "Up", h_align = "r", x = 240, y = 40, colour = colors.highlight},
+        {text = "Today", x = 20, y = 60, colour = colors.highlight},
+        {text = vnstat_lines[1] or "N/A", font_name = "arial", h_align = "r", x = 140, y = 60, colour = colors.secondary},
+        {text = vnstat_lines[2] or "N/A", font_name = "arial", h_align = "r", x = 240, y = 60, colour = colors.secondary},
+        {text = "Week", x = 20, y = 80, colour = colors.highlight},
+        {text = vnstat_lines[3] or "N/A", font_name = "arial", h_align = "r", x = 140, y = 80, colour = colors.secondary},
+        {text = vnstat_lines[4] or "N/A", font_name = "arial", h_align = "r", x = 240, y = 80, colour = colors.secondary},
+        {text = "Month", x = 20, y = 100, colour = colors.highlight},
+        {text = vnstat_lines[5] or "N/A", font_name = "arial", h_align = "r", x = 140, y = 100, colour = colors.secondary},
+        {text = vnstat_lines[6] or "N/A", font_name = "arial", h_align = "r", x = 240, y = 100, colour = colors.secondary},
     }
 
     local cs = create_surface()

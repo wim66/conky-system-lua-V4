@@ -53,9 +53,9 @@ M.boxes_settings = {
     {
         type = "background",
         x = 0, y = 6, w = 242, h = 116,
-        centre_x = true,  -- Optioneel centreren
+        centre_x = true, 
         corners = {0, 0, 20 ,20},
-        rotation = 0,  -- Toegevoegd voor rotatiemogelijkheid
+        rotation = 0,
         draw_me = true,
         colour = bg_color
     },
@@ -65,9 +65,9 @@ M.boxes_settings = {
         x = 0, y = 6, w = 242, h = 116,
         centre_x = true,
         corners = {0, 0, 20 ,20},
-        rotation = 0,  -- Toegevoegd voor rotatiemogelijkheid
+        rotation = 0,
         draw_me = true,
-        linear_gradient = {0, 11, 0, 116}, -- Aangepast aan x en w
+        linear_gradient = {0, 0, 0, 116},
         colours =layer2_color,
     },
     -- Border
@@ -80,7 +80,7 @@ M.boxes_settings = {
         draw_me = true,
         border = 4,
         colour = border_color,
-        linear_gradient = {0, 5, 0, 128} 
+        linear_gradient = {0, 0, 0, 128} 
     }
 }
 
