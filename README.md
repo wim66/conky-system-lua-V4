@@ -66,7 +66,7 @@ To use these Conkies, ensure the following dependencies are installed:
 		```
 	* **Arch Linux:**
 		```sh
-		sudo pacman -S conky lm_sensors vnstat bc jq
+		sudo pacman -S conky-cairo lm_sensors vnstat bc jq
 		```
 
 4. Install Qt libraries (required for ConkySettingsUpdater):
